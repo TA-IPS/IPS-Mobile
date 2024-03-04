@@ -140,7 +140,7 @@ fun MapScreen() {
         override fun run() {
             wifiManager.startScan()
         }
-    }, 2000)
+    }, 5000)
 
 
 
