@@ -192,7 +192,7 @@ fun MapScreen() {
             // User Gerak
             Spacer(modifier = Modifier.width(8.dp))
             IconButton(
-                onClick = { userY-=100 ; userDirection = 0f; },
+                onClick = { userY-=100 ; userDirection = 0f;  Log.d("User", "User Y: $userY, User X: $userX")},
                 enabled = userY > 100f,
                 modifier = Modifier.size(48.dp)
             ) {
@@ -227,7 +227,7 @@ fun MapScreen() {
         Text(text = floorLabels[lantai], style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
 
         if (showDialog) {
-            WifiListDialog(wifiList = wifiList, onClose = { showDialog = false })
+            WifiListDialog(wifiList = wifiList, onClose = { showDialog = false }, floor = lantai, x = userX.toInt(), y = userY.toInt())
         }
 
         Box(
@@ -331,7 +331,9 @@ fun UserIcon( userX: Float, userY: Float, userDirection: Float, ratio: Float){
 
 
 @Composable
-fun WifiListDialog(wifiList: List<ScanResult>, onClose: () -> Unit ) {
+fun WifiListDialog(wifiList: List<ScanResult>, onClose: () -> Unit, floor: Int, x: Int, y: Int) {
+    val apValues = mutableMapOf<String, Float?>()
+
     Dialog(onDismissRequest = onClose) {
         Surface(
             modifier = Modifier.width(300.dp),
@@ -345,7 +347,7 @@ fun WifiListDialog(wifiList: List<ScanResult>, onClose: () -> Unit ) {
                     style = MaterialTheme.typography.headlineMedium, color = Color.Black,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
-                Text(text = "Pada Grid 1 Lantai 1",
+                Text(text = "Pada Grid x:$x y:$y Lantai $floor",
                     style = MaterialTheme.typography.bodyLarge, color = Color.Black,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
@@ -357,6 +359,31 @@ fun WifiListDialog(wifiList: List<ScanResult>, onClose: () -> Unit ) {
                         .weight(weight = 1f, fill = false)
                 ) {
                     items(wifiList) { item ->
+
+
+                        when (item.BSSID) {
+                            Constants.AP1 -> apValues["ap1"] = item.level.toFloat()
+                            Constants.AP2 -> apValues["ap2"] = item.level.toFloat()
+                            Constants.AP3 -> apValues["ap3"] = item.level.toFloat()
+                            Constants.AP4 -> apValues["ap4"] = item.level.toFloat()
+                            Constants.AP5 -> apValues["ap5"] = item.level.toFloat()
+                            Constants.AP6 -> apValues["ap6"] = item.level.toFloat()
+                            Constants.AP7 -> apValues["ap7"] = item.level.toFloat()
+                            Constants.AP8 -> apValues["ap8"] = item.level.toFloat()
+                            Constants.AP9 -> apValues["ap9"] = item.level.toFloat()
+                            Constants.AP10 -> apValues["ap10"] = item.level.toFloat()
+                            Constants.AP11 -> apValues["ap11"] = item.level.toFloat()
+                            Constants.AP12 -> apValues["ap12"] = item.level.toFloat()
+                            Constants.AP13 -> apValues["ap13"] = item.level.toFloat()
+                            Constants.AP14 -> apValues["ap14"] = item.level.toFloat()
+                            Constants.AP15 -> apValues["ap15"] = item.level.toFloat()
+                            Constants.AP16 -> apValues["ap16"] = item.level.toFloat()
+                            Constants.AP17 -> apValues["ap17"] = item.level.toFloat()
+                            Constants.AP18 -> apValues["ap18"] = item.level.toFloat()
+                            Constants.AP19 -> apValues["ap19"] = item.level.toFloat()
+                            Constants.AP20 -> apValues["ap20"] = item.level.toFloat()
+                        }
+
                         Column {
                             Text(text = "SSID: ${item.SSID}")
                             Text(text = "BSSID: ${item.BSSID}")
@@ -369,7 +396,39 @@ fun WifiListDialog(wifiList: List<ScanResult>, onClose: () -> Unit ) {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Button(onClick = {}, modifier = Modifier.fillMaxWidth()) {
+                Button(onClick = {
+                    val fingerprint = Fingerprint(
+                        attempt = 1,
+                        x = x,
+                        y = y,
+                        z = floor,
+                        ap1 = apValues["ap1"],
+                        ap2 = apValues["ap2"],
+                        ap3 = apValues["ap3"],
+                        ap4 = apValues["ap4"],
+                        ap5 = apValues["ap5"],
+                        ap6 = apValues["ap6"],
+                        ap7 = apValues["ap7"],
+                        ap8 = apValues["ap8"],
+                        ap9 = apValues["ap9"],
+                        ap10 = apValues["ap10"],
+                        ap11 = apValues["ap11"],
+                        ap12 = apValues["ap12"],
+                        ap13 = apValues["ap13"],
+                        ap14 = apValues["ap14"],
+                        ap15 = apValues["ap15"],
+                        ap16 = apValues["ap16"],
+                        ap17 = apValues["ap17"],
+                        ap18 = apValues["ap18"],
+                        ap19 = apValues["ap19"],
+                        ap20 = apValues["ap20"]
+                    )
+                    CoroutineScope(Dispatchers.IO).launch {
+                        RetrofitInstance.apiService.postFingerprint(fingerprint)
+                    }
+                    Log.v("Fingerprint", apValues.toString())
+                },
+                    modifier = Modifier.fillMaxWidth()) {
                     Text(text = "Save")
                 }
 
