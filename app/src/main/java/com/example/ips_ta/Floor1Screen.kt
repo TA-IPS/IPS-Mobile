@@ -13,8 +13,8 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun Floor1Screen(ratio: Float) {
-    val sizeLantai = 40f/5;
-    val sizeLantaiKantin = 60f/5;
+    val sizeLantai = 40f;
+    val sizeLantaiKantin = 60f;
     Canvas(modifier = Modifier.fillMaxSize()) {
         drawRect(
             color = Color.Gray,

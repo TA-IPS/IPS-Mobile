@@ -12,9 +12,7 @@ import android.net.wifi.WifiManager
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
@@ -41,7 +39,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -53,7 +50,6 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.core.app.ActivityCompat
-import androidx.core.app.ActivityCompat.requestPermissions
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -61,6 +57,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Timer
 import java.util.TimerTask
+import kotlin.random.Random
 
 
 class MainActivity : ComponentActivity() {
@@ -136,19 +133,9 @@ fun MapScreen() {
 //        }
 //    }
 
-    Timer().schedule(object : TimerTask() {
-        override fun run() {
-            wifiManager.startScan()
-        }
-    }, 5000)
-
-
-
-
-
     var top by remember { mutableFloatStateOf(0f) }
     var left by remember { mutableFloatStateOf(0f) }
-    var ratio by remember { mutableFloatStateOf(1f) }
+    var ratio by remember { mutableFloatStateOf(0.2f) }
 
     var userX by remember { mutableFloatStateOf(150f) }
     var userY by remember { mutableFloatStateOf(150f) }
@@ -160,13 +147,56 @@ fun MapScreen() {
 //    val screenList = listOf(Floor0Screen(ratio),Floor1Screen(ratio),Floor2Screen(ratio))
     val floorLabels = listOf("Dasar", "Lantai 1", "Lantai 2", "Lantai 3", "Lantai 4", "Lantai 5", "Lantai 6")
 
+    var isScanning by remember { mutableStateOf(false) }
+    var isPersonFocused by remember { mutableStateOf(false) }
+    var isUserIconShown by remember { mutableStateOf(false) }
+    var currentCondition by remember { mutableStateOf("") }
+
+    val randomX = List(60) { (it + 1) * 100 }
+    val randomY = List(20) { (it + 1) * 100 }
+    val randomZ = List(2) { (it) }
+    LaunchedEffect(isScanning) {
+        if (!isScanning) {
+            isPersonFocused = true
+            currentCondition = "Determining Location"
+
+            while (true) {
+                delay(3000) // Delay for 2 seconds
+                //tembak api
+                val chosenX = randomX[Random.nextInt(randomX.size)]
+                val chosenY = randomY[Random.nextInt(randomY.size)]
+                val chosenZ = randomZ[Random.nextInt(randomZ.size)]
+
+                isUserIconShown = true
+                userX = chosenX.toFloat()
+                userY = chosenY.toFloat()
+                userLantai = chosenZ
+
+                currentCondition = "${floorLabels[chosenZ]} x: $chosenX y: $chosenY"
+
+                if (isPersonFocused) {
+                    ratio = 0.6f
+                    top=-userY * ratio + 800
+                    left =-userX * ratio + 525
+                    lantai = chosenZ
+                }
+            }
+        }
+    }
+
+    Timer().schedule(object : TimerTask() {
+        override fun run() {
+            wifiManager.startScan()
+        }
+    }, 2000)
+
 
     Column {
         Row(
             modifier = Modifier.padding(8.dp)
         ) {
             IconButton(
-                onClick = { ratio++ },
+                onClick = { ratio += 0.2f },
                 enabled = true,
                 modifier = Modifier.size(48.dp)
             ) {
@@ -174,8 +204,8 @@ fun MapScreen() {
             }
             Spacer(modifier = Modifier.width(8.dp))
             IconButton(
-                onClick = { ratio-- },
-                enabled = ratio > 1,
+                onClick = { ratio -= 0.2f },
+                enabled = ratio > 0.201f,
                 modifier = Modifier.size(48.dp)
             ) {
                 Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Zoom Out")
@@ -183,7 +213,7 @@ fun MapScreen() {
 
             Spacer(modifier = Modifier.width(8.dp))
             IconButton(
-                onClick = { top=-userY*ratio+800 ; left =-userX*ratio + 525; },
+                onClick = { ratio = 0.6f; top=-userY*ratio+800 ; left =-userX*ratio + 525; isPersonFocused = true},
                 modifier = Modifier.size(48.dp)) {
 
                 Icon(Icons.Default.LocationOn, contentDescription = "Center")
@@ -193,7 +223,7 @@ fun MapScreen() {
             Spacer(modifier = Modifier.width(8.dp))
             IconButton(
                 onClick = { userY-=100 ; userDirection = 0f;  Log.d("User", "User Y: $userY, User X: $userX")},
-                enabled = userY > 100f,
+                enabled = userY > 100f && isScanning,
                 modifier = Modifier.size(48.dp)
             ) {
                 Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Move Up")
@@ -202,7 +232,7 @@ fun MapScreen() {
             Spacer(modifier = Modifier.width(8.dp))
             IconButton(
                 onClick = { userY+=100 ; userDirection = 180f; },
-                enabled = userY + 100< 600f,
+                enabled = userY + 100 < 2340f && isScanning,
                 modifier = Modifier.size(48.dp)
             ) {
                 Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Move Down")
@@ -210,7 +240,7 @@ fun MapScreen() {
             Spacer(modifier = Modifier.width(8.dp))
             IconButton(
                 onClick = { userX+=100 ; userDirection = 90f; },
-                enabled = userX + 100< 800f,
+                enabled = userX + 100 < 6120f && isScanning,
                 modifier = Modifier.size(48.dp)
             ) {
                 Icon(Icons.Default.KeyboardArrowRight, contentDescription = "Move Right")
@@ -218,13 +248,38 @@ fun MapScreen() {
             Spacer(modifier = Modifier.width(8.dp))
             IconButton(
                 onClick = { userX-=100 ; userDirection = 270f; },
-                enabled = userX > 100f,
+                enabled = userX > 100f && isScanning,
                 modifier = Modifier.size(48.dp)
             ) {
                 Icon(Icons.Default.KeyboardArrowLeft, contentDescription = "Move Left")
             }
         }
-        Text(text = floorLabels[lantai], style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
+        Row (
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = floorLabels[lantai],
+                style = MaterialTheme.typography.headlineMedium,
+                textAlign = TextAlign.Center
+            )
+            Switch(
+                checked = isScanning,
+                onCheckedChange = {
+                    isScanning = it
+                    if (!isScanning) {
+                        isUserIconShown = false
+                    } else {
+                        currentCondition = "Mode input data"
+                    }
+                }
+            )
+        }
+        Text(
+            text = currentCondition,
+            style = MaterialTheme.typography.headlineSmall,
+            textAlign = TextAlign.Center
+        )
 
         if (showDialog) {
             WifiListDialog(wifiList = wifiList, onClose = { showDialog = false }, floor = lantai, x = userX.toInt(), y = userY.toInt())
@@ -237,6 +292,7 @@ fun MapScreen() {
                     detectDragGestures { _, dragAmount ->
                         top += dragAmount.y
                         left += dragAmount.x
+                        isPersonFocused = false
                     }
                 }
         ) {
@@ -246,7 +302,7 @@ fun MapScreen() {
 
             ) {
                 // Cek Jika Level 0 tampilkan Floor0Screen, Level 1 tampilkan Floor1Screen
-                if(userLantai == lantai){
+                if(lantai == userLantai && isUserIconShown){
                     UserIcon(userX = userX, userY = userY, userDirection = userDirection , ratio = ratio)
                 }
 
@@ -269,16 +325,20 @@ fun MapScreen() {
                 verticalArrangement = Arrangement.Bottom,
                 horizontalAlignment = Alignment.End
             ) {
-                IconButton(
-                    onClick = { showDialog = true },
-                    modifier = Modifier.size(48.dp)
-                ) {
-                    Icon(Icons.Default.AddCircle, contentDescription = "Show Modal")
+                if (isScanning) {
+                    IconButton(
+                        onClick = { showDialog = true },
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        Icon(Icons.Default.AddCircle, contentDescription = "Show Modal")
+                    }
                 }
                 floorLabels.forEachIndexed { index, label ->
                     Spacer(modifier = Modifier.height(4.dp))
                     Button(
-                        onClick = { lantai = index },
+                        onClick = { lantai = index
+                                  userLantai = index
+                                  isPersonFocused = false },
                         modifier = Modifier
                             .padding(horizontal = 8.dp)
                             .width(100.dp)
