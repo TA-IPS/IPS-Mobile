@@ -27,41 +27,41 @@ fun Floor0Screen(ratio: Float) {
         // AD 04 & 03
         path.moveTo(length(0, 0, ratio), length(0, 0, ratio))
         path.lineTo(length(0,27, ratio), length(0, 0, ratio))
-        path.lineTo(length(0,27, ratio), length(0, 26, ratio))
-        path.lineTo(length(0, 0, ratio), length(0, 26, ratio))
+        path.lineTo(length(0,27, ratio), length(3, 26, ratio))
+        path.lineTo(length(0, 0, ratio), length(3, 26, ratio))
         path.close()
 
         // AD 06 & 07
         path.moveTo(length(0, 35, ratio), length(0, 0, ratio))
         path.lineTo(length(0, 72, ratio), length(0, 0, ratio))
-        path.lineTo(length(0, 72, ratio), length(0, 16, ratio))
-        path.lineTo(length(0, 35, ratio), length(0, 16, ratio))
+        path.lineTo(length(0, 72, ratio), length(3, 16, ratio))
+        path.lineTo(length(0, 35, ratio), length(3, 16, ratio))
         path.close()
 
         // AD 05, 08, 09, asumsi mereka lebar nya sama kek AD 06
-        path.moveTo(length(0, 35, ratio), length(0, 16, ratio))
-        path.lineTo(length(0, 72, ratio), length(0, 16, ratio))
-        path.lineTo(length(0, 72, ratio), length(0, 32, ratio))
-        path.lineTo(length(0, 35, ratio), length(0, 32, ratio))
+        path.moveTo(length(0, 35, ratio), length(3, 16, ratio))
+        path.lineTo(length(0, 72, ratio), length(3, 16, ratio))
+        path.lineTo(length(0, 72, ratio), length(3, 32, ratio))
+        path.lineTo(length(0, 35, ratio), length(3, 32, ratio))
         path.close()
 
         // AD 01 & 02
-        path.moveTo(length(0, 0, ratio), length(0, 32, ratio))
-        path.lineTo(length(0,27, ratio), length(0, 32, ratio))
+        path.moveTo(length(0, 0, ratio), length(3, 32, ratio))
+        path.lineTo(length(0,27, ratio), length(3, 32, ratio))
         path.lineTo(length(0,27, ratio), length(39, 0, ratio))
         path.lineTo(length(0, 0, ratio), length(39, 0, ratio))
         path.close()
 
         // AD10 & lift & pintu tangga
-        path.moveTo(length(0, 41, ratio), length(0, 39, ratio))
-        path.lineTo(length(0, 72, ratio), length(0, 39, ratio))
-        path.lineTo(length(0, 72, ratio), length(0, 47, ratio))
-        path.lineTo(length(0, 41, ratio), length(0, 47, ratio))
+        path.moveTo(length(0, 41, ratio), length(3, 39, ratio))
+        path.lineTo(length(0, 72, ratio), length(3, 39, ratio))
+        path.lineTo(length(0, 72, ratio), length(3, 47, ratio))
+        path.lineTo(length(0, 41, ratio), length(3, 47, ratio))
         path.close()
 
         // toilet dkk
-        path.moveTo(length(0, 41, ratio), length(0, 50, ratio))
-        path.lineTo(length(0, 72, ratio), length(0, 50, ratio))
+        path.moveTo(length(0, 41, ratio), length(3, 50, ratio))
+        path.lineTo(length(0, 72, ratio), length(3, 50, ratio))
         path.lineTo(length(0, 72, ratio), length(39, 0, ratio))
         path.lineTo(length(0, 41, ratio), length(39, 0, ratio))
         path.close()

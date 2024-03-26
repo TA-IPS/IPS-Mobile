@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import kotlin.math.pow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -412,6 +413,7 @@ fun WifiListDialog(wifiList: List<ScanResult>, onClose: () -> Unit, floor: Int, 
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
 
+                val unregisteredBssid = mutableSetOf<Wifi>()
 
                 LazyColumn(
                     userScrollEnabled = true,
@@ -419,36 +421,150 @@ fun WifiListDialog(wifiList: List<ScanResult>, onClose: () -> Unit, floor: Int, 
                         .weight(weight = 1f, fill = false)
                 ) {
                     items(wifiList) { item ->
+                        var isExist = false
 
-
-                        when (item.BSSID) {
-                            Constants.AP1 -> apValues["ap1"] = item.level.toFloat()
-                            Constants.AP2 -> apValues["ap2"] = item.level.toFloat()
-                            Constants.AP3 -> apValues["ap3"] = item.level.toFloat()
-                            Constants.AP4 -> apValues["ap4"] = item.level.toFloat()
-                            Constants.AP5 -> apValues["ap5"] = item.level.toFloat()
-                            Constants.AP6 -> apValues["ap6"] = item.level.toFloat()
-                            Constants.AP7 -> apValues["ap7"] = item.level.toFloat()
-                            Constants.AP8 -> apValues["ap8"] = item.level.toFloat()
-                            Constants.AP9 -> apValues["ap9"] = item.level.toFloat()
-                            Constants.AP10 -> apValues["ap10"] = item.level.toFloat()
-                            Constants.AP11 -> apValues["ap11"] = item.level.toFloat()
-                            Constants.AP12 -> apValues["ap12"] = item.level.toFloat()
-                            Constants.AP13 -> apValues["ap13"] = item.level.toFloat()
-                            Constants.AP14 -> apValues["ap14"] = item.level.toFloat()
-                            Constants.AP15 -> apValues["ap15"] = item.level.toFloat()
-                            Constants.AP16 -> apValues["ap16"] = item.level.toFloat()
-                            Constants.AP17 -> apValues["ap17"] = item.level.toFloat()
-                            Constants.AP18 -> apValues["ap18"] = item.level.toFloat()
-                            Constants.AP19 -> apValues["ap19"] = item.level.toFloat()
-                            Constants.AP20 -> apValues["ap20"] = item.level.toFloat()
+                        when (item.BSSID.uppercase()) {
+                            Constants.AP1 -> { apValues["ap1"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP2 -> { apValues["ap2"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP3 -> { apValues["ap3"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP4 -> { apValues["ap4"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP5 -> { apValues["ap5"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP6 -> { apValues["ap6"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP7 -> { apValues["ap7"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP8 -> { apValues["ap8"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP9 -> { apValues["ap9"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP10 -> { apValues["ap10"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP11 -> { apValues["ap11"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP12 -> { apValues["ap12"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP13 -> { apValues["ap13"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP14 -> { apValues["ap14"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP15 -> { apValues["ap15"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP16 -> { apValues["ap16"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP17 -> { apValues["ap17"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP18 -> { apValues["ap18"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP19 -> { apValues["ap19"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP20 -> { apValues["ap20"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP21 -> { apValues["ap21"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP22 -> { apValues["ap22"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP23 -> { apValues["ap23"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP24 -> { apValues["ap24"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP25 -> { apValues["ap25"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP26 -> { apValues["ap26"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP27 -> { apValues["ap27"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP28 -> { apValues["ap28"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP29 -> { apValues["ap29"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP30 -> { apValues["ap30"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP31 -> { apValues["ap31"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP32 -> { apValues["ap32"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP33 -> { apValues["ap33"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP34 -> { apValues["ap34"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP35 -> { apValues["ap35"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP36 -> { apValues["ap36"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP37 -> { apValues["ap37"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP38 -> { apValues["ap38"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP39 -> { apValues["ap39"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP40 -> { apValues["ap40"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP41 -> { apValues["ap41"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP42 -> { apValues["ap42"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP43 -> { apValues["ap43"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP44 -> { apValues["ap44"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP45 -> { apValues["ap45"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP46 -> { apValues["ap46"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP47 -> { apValues["ap47"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP48 -> { apValues["ap48"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP49 -> { apValues["ap49"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP50 -> { apValues["ap50"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP51 -> { apValues["ap51"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP52 -> { apValues["ap52"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP53 -> { apValues["ap53"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP54 -> { apValues["ap54"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP55 -> { apValues["ap55"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP56 -> { apValues["ap56"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP57 -> { apValues["ap57"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP58 -> { apValues["ap58"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP59 -> { apValues["ap59"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP60 -> { apValues["ap60"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP61 -> { apValues["ap61"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP62 -> { apValues["ap62"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP63 -> { apValues["ap63"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP64 -> { apValues["ap64"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP65 -> { apValues["ap65"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP66 -> { apValues["ap66"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP67 -> { apValues["ap67"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP68 -> { apValues["ap68"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP69 -> { apValues["ap69"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP70 -> { apValues["ap70"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP71 -> { apValues["ap71"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP72 -> { apValues["ap72"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP73 -> { apValues["ap73"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP74 -> { apValues["ap74"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP75 -> { apValues["ap75"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP76 -> { apValues["ap76"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP77 -> { apValues["ap77"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP78 -> { apValues["ap78"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP79 -> { apValues["ap79"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP80 -> { apValues["ap80"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP81 -> { apValues["ap81"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP82 -> { apValues["ap82"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP83 -> { apValues["ap83"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP84 -> { apValues["ap84"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP85 -> { apValues["ap85"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP86 -> { apValues["ap86"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP87 -> { apValues["ap87"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP88 -> { apValues["ap88"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP89 -> { apValues["ap89"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP90 -> { apValues["ap90"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP91 -> { apValues["ap91"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP92 -> { apValues["ap92"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP93 -> { apValues["ap93"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP94 -> { apValues["ap94"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP95 -> { apValues["ap95"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP96 -> { apValues["ap96"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP97 -> { apValues["ap97"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP98 -> { apValues["ap98"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP99 -> { apValues["ap99"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP100 -> { apValues["ap100"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP101 -> { apValues["ap101"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP102 -> { apValues["ap102"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP103 -> { apValues["ap103"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP104 -> { apValues["ap104"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP105 -> { apValues["ap105"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP106 -> { apValues["ap106"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP107 -> { apValues["ap107"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP108 -> { apValues["ap108"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP109 -> { apValues["ap109"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP110 -> { apValues["ap110"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP111 -> { apValues["ap111"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP112 -> { apValues["ap112"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP113 -> { apValues["ap113"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP114 -> { apValues["ap114"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP115 -> { apValues["ap115"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP116 -> { apValues["ap116"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP117 -> { apValues["ap117"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP118 -> { apValues["ap118"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP119 -> { apValues["ap119"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP120 -> { apValues["ap120"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP121 -> { apValues["ap121"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP122 -> { apValues["ap122"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP123 -> { apValues["ap123"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP124 -> { apValues["ap124"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP125 -> { apValues["ap125"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP126 -> { apValues["ap126"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP127 -> { apValues["ap127"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP128 -> { apValues["ap128"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP129 -> { apValues["ap129"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP130 -> { apValues["ap130"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
                         }
 
-                        Column {
-                            Text(text = "SSID: ${item.SSID}")
-                            Text(text = "BSSID: ${item.BSSID}")
-                            Text(text = "RSSI: ${item.level}")
-                            Divider()
+                        if (isExist) {
+                            Column {
+                                Text(text = "SSID: ${item.SSID}")
+                                Text(text = "BSSID: ${item.BSSID}")
+                                Text(text = "RSSI: ${item.level}")
+                                Divider()
+                            }
+                        } else {
+                            unregisteredBssid.add(Wifi(item.BSSID, item.SSID))
                         }
                     }
                 }
@@ -481,12 +597,133 @@ fun WifiListDialog(wifiList: List<ScanResult>, onClose: () -> Unit, floor: Int, 
                         ap17 = apValues["ap17"],
                         ap18 = apValues["ap18"],
                         ap19 = apValues["ap19"],
-                        ap20 = apValues["ap20"]
+                        ap20 = apValues["ap20"],
+                        ap21 = apValues["ap21"],
+                        ap22 = apValues["ap22"],
+                        ap23 = apValues["ap23"],
+                        ap24 = apValues["ap24"],
+                        ap25 = apValues["ap25"],
+                        ap26 = apValues["ap26"],
+                        ap27 = apValues["ap27"],
+                        ap28 = apValues["ap28"],
+                        ap29 = apValues["ap29"],
+                        ap30 = apValues["ap30"],
+                        ap31 = apValues["ap31"],
+                        ap32 = apValues["ap32"],
+                        ap33 = apValues["ap33"],
+                        ap34 = apValues["ap34"],
+                        ap35 = apValues["ap35"],
+                        ap36 = apValues["ap36"],
+                        ap37 = apValues["ap37"],
+                        ap38 = apValues["ap38"],
+                        ap39 = apValues["ap39"],
+                        ap40 = apValues["ap40"],
+                        ap41 = apValues["ap41"],
+                        ap42 = apValues["ap42"],
+                        ap43 = apValues["ap43"],
+                        ap44 = apValues["ap44"],
+                        ap45 = apValues["ap45"],
+                        ap46 = apValues["ap46"],
+                        ap47 = apValues["ap47"],
+                        ap48 = apValues["ap48"],
+                        ap49 = apValues["ap49"],
+                        ap50 = apValues["ap50"],
+                        ap51 = apValues["ap51"],
+                        ap52 = apValues["ap52"],
+                        ap53 = apValues["ap53"],
+                        ap54 = apValues["ap54"],
+                        ap55 = apValues["ap55"],
+                        ap56 = apValues["ap56"],
+                        ap57 = apValues["ap57"],
+                        ap58 = apValues["ap58"],
+                        ap59 = apValues["ap59"],
+                        ap60 = apValues["ap60"],
+                        ap61 = apValues["ap61"],
+                        ap62 = apValues["ap62"],
+                        ap63 = apValues["ap63"],
+                        ap64 = apValues["ap64"],
+                        ap65 = apValues["ap65"],
+                        ap66 = apValues["ap66"],
+                        ap67 = apValues["ap67"],
+                        ap68 = apValues["ap68"],
+                        ap69 = apValues["ap69"],
+                        ap70 = apValues["ap70"],
+                        ap71 = apValues["ap71"],
+                        ap72 = apValues["ap72"],
+                        ap73 = apValues["ap73"],
+                        ap74 = apValues["ap74"],
+                        ap75 = apValues["ap75"],
+                        ap76 = apValues["ap76"],
+                        ap77 = apValues["ap77"],
+                        ap78 = apValues["ap78"],
+                        ap79 = apValues["ap79"],
+                        ap80 = apValues["ap80"],
+                        ap81 = apValues["ap81"],
+                        ap82 = apValues["ap82"],
+                        ap83 = apValues["ap83"],
+                        ap84 = apValues["ap84"],
+                        ap85 = apValues["ap85"],
+                        ap86 = apValues["ap86"],
+                        ap87 = apValues["ap87"],
+                        ap88 = apValues["ap88"],
+                        ap89 = apValues["ap89"],
+                        ap90 = apValues["ap90"],
+                        ap91 = apValues["ap91"],
+                        ap92 = apValues["ap92"],
+                        ap93 = apValues["ap93"],
+                        ap94 = apValues["ap94"],
+                        ap95 = apValues["ap95"],
+                        ap96 = apValues["ap96"],
+                        ap97 = apValues["ap97"],
+                        ap98 = apValues["ap98"],
+                        ap99 = apValues["ap99"],
+                        ap100 = apValues["ap100"],
+                        ap101 = apValues["ap101"],
+                        ap102 = apValues["ap102"],
+                        ap103 = apValues["ap103"],
+                        ap104 = apValues["ap104"],
+                        ap105 = apValues["ap105"],
+                        ap106 = apValues["ap106"],
+                        ap107 = apValues["ap107"],
+                        ap108 = apValues["ap108"],
+                        ap109 = apValues["ap109"],
+                        ap110 = apValues["ap110"],
+                        ap111 = apValues["ap111"],
+                        ap112 = apValues["ap112"],
+                        ap113 = apValues["ap113"],
+                        ap114 = apValues["ap114"],
+                        ap115 = apValues["ap115"],
+                        ap116 = apValues["ap116"],
+                        ap117 = apValues["ap117"],
+                        ap118 = apValues["ap118"],
+                        ap119 = apValues["ap119"],
+                        ap120 = apValues["ap120"],
+                        ap121 = apValues["ap121"],
+                        ap122 = apValues["ap122"],
+                        ap123 = apValues["ap123"],
+                        ap124 = apValues["ap124"],
+                        ap125 = apValues["ap125"],
+                        ap126 = apValues["ap126"],
+                        ap127 = apValues["ap127"],
+                        ap128 = apValues["ap128"],
+                        ap129 = apValues["ap129"],
+                        ap130 = apValues["ap130"],
+                        ap131 = apValues["ap131"],
+                        ap132 = apValues["ap132"],
+                        ap133 = apValues["ap133"],
+                        ap134 = apValues["ap134"],
+                        ap135 = apValues["ap135"],
+                        ap136 = apValues["ap136"],
+                        ap137 = apValues["ap137"],
+                        ap138 = apValues["ap138"],
+                        ap139 = apValues["ap139"],
+                        ap140 = apValues["ap140"],
+                        wifi = unregisteredBssid
                     )
+                    Log.v("wifis", unregisteredBssid.toString())
                     CoroutineScope(Dispatchers.IO).launch {
                         RetrofitInstance.apiService.postFingerprint(fingerprint)
                     }
-                    Log.v("Fingerprint", apValues.toString())
                 },
                     modifier = Modifier.fillMaxWidth()) {
                     Text(text = "Save")
