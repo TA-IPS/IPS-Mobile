@@ -9,10 +9,12 @@ import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.net.wifi.ScanResult
 import android.net.wifi.WifiManager
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
@@ -51,6 +53,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.ips_ta.stepdetector.AccelSensorDetector
+import com.example.ips_ta.stepdetector.OrientationDetector
+import com.example.ips_ta.stepdetector.StepListener
+import com.example.ips_ta.stepdetector.TrajectoryViewModel
 import kotlin.math.pow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -63,6 +70,7 @@ import kotlin.random.Random
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+
         super.onCreate(savedInstanceState)
         setContent {
             Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
@@ -93,6 +101,18 @@ fun MapScreen() {
             ActivityCompat.requestPermissions(
                 context as Activity,
                 arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                100
+            )
+        }
+
+        if (ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.HIGH_SAMPLING_RATE_SENSORS
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                context as Activity,
+                arrayOf(Manifest.permission.HIGH_SAMPLING_RATE_SENSORS),
                 100
             )
         }
@@ -156,6 +176,16 @@ fun MapScreen() {
     val randomX = List(60) { (it + 1) * 100 }
     val randomY = List(20) { (it + 1) * 100 }
     val randomZ = List(2) { (it) }
+
+    var isCounting by remember { mutableStateOf(false) }
+    val trajectoryViewModel: TrajectoryViewModel = viewModel()
+    var stepDetector: AccelSensorDetector? = AccelSensorDetector(context)
+    var orientation by remember { mutableFloatStateOf(0f) }
+    var stepCount by remember { mutableIntStateOf(0) }
+    var orientationDetector: OrientationDetector = OrientationDetector(LocalContext.current) { azimuth ->
+        orientation = azimuth
+    }
+
     LaunchedEffect(isScanning) {
         if (!isScanning) {
             isPersonFocused = true
@@ -304,7 +334,8 @@ fun MapScreen() {
             ) {
                 // Cek Jika Level 0 tampilkan Floor0Screen, Level 1 tampilkan Floor1Screen
                 if(lantai == userLantai && isUserIconShown){
-                    UserIcon(userX = userX, userY = userY, userDirection = userDirection , ratio = ratio)
+                    UserIcon(userX = userX, userY = userY, userDirection = userDirection , ratio = ratio, trajectoryViewModel = trajectoryViewModel)
+
                 }
 
                 when(lantai){
@@ -348,6 +379,27 @@ fun MapScreen() {
                         Text(label)
                     }
                 }
+                Button(onClick = {
+                    isCounting = !isCounting
+                    if (isCounting) {
+                        stepDetector?.registerListener(object : StepListener {
+                            override fun onStep(count: Int) {
+                                stepCount += count
+
+                                trajectoryViewModel.addStep(orientation)
+                            }
+                        })
+                        orientationDetector.start()
+                        trajectoryViewModel.addStep(orientation)
+                        Log.d("Debug", "isCounting toggled On: $stepDetector")
+                    } else {
+                        Log.d("Debug", "isCounting toggled Check: $stepDetector")
+                        stepDetector?.unregisterListener()
+                        Log.d("Debug", "isCounting toggled OFF JING: $stepDetector")
+                    }
+                }) {
+                    Text(text = if (isCounting) "Stop Counting" else "Start Counting")
+                }
             }
 
         }
@@ -356,7 +408,7 @@ fun MapScreen() {
 }
 
 @Composable
-fun UserIcon( userX: Float, userY: Float, userDirection: Float, ratio: Float){
+fun UserIcon( userX: Float, userY: Float, userDirection: Float, ratio: Float, trajectoryViewModel: TrajectoryViewModel){
     Canvas(modifier = Modifier.fillMaxSize()
     ) {
         val userCenter = Offset(userX * ratio, userY * ratio)
@@ -373,6 +425,14 @@ fun UserIcon( userX: Float, userY: Float, userDirection: Float, ratio: Float){
             path.lineTo((userX + 0f) * ratio, (userY-25f) * ratio)
             path.lineTo((userX - 15f) * ratio, (userY-15f) * ratio)
 
+            // PDR
+            val start = trajectoryViewModel.stepPositions.first()
+            path.moveTo(start.x, start.y)
+
+            trajectoryViewModel.stepPositions.forEach { position ->
+                path.lineTo(position.x, position.y)
+            }
+
             drawPath(
                 path = path,
                 color = Color.Blue,
@@ -381,6 +441,8 @@ fun UserIcon( userX: Float, userY: Float, userDirection: Float, ratio: Float){
         }
     }
 }
+
+
 
 
 
