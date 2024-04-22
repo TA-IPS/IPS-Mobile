@@ -426,6 +426,7 @@ fun UserIcon( userX: Float, userY: Float, userDirection: Float, ratio: Float, tr
             path.lineTo((userX - 15f) * ratio, (userY-15f) * ratio)
 
             // PDR
+            trajectoryViewModel.addFirstStepCoordinates(userX * ratio, userY * ratio)
             val start = trajectoryViewModel.stepPositions.first()
             path.moveTo(start.x, start.y)
 

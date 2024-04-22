@@ -9,7 +9,7 @@ class TrajectoryViewModel : ViewModel() {
     var stepPositions = mutableStateListOf(StepPosition(0f, 0f))
         private set
 
-    fun addStep(orientationDegrees: Float, stepLengthCm: Float = 70f) {
+    fun addStep(orientationDegrees: Float, stepLengthCm: Float = 50f) {
         // Convert degrees to radians for the math functions
         val orientationRadians = Math.toRadians(orientationDegrees.toDouble())
 
@@ -23,5 +23,14 @@ class TrajectoryViewModel : ViewModel() {
         )
         Log.d("TrajectoryViewModel", "Orientation: $orientationDegrees, New Position: $newPosition")
         stepPositions.add(newPosition)
+    }
+
+    fun clearSteps() {
+        stepPositions.clear()
+    }
+
+    fun addFirstStepCoordinates(x: Float, y: Float) {
+        stepPositions.clear()
+        stepPositions.add(StepPosition(x, y))
     }
 }
