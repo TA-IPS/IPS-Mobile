@@ -162,7 +162,7 @@ fun MapScreen() {
             currentCondition = "Determining Location"
 
             while (true) {
-                delay(3000) // Delay for 2 seconds
+                delay(2000) // Delay for 2 seconds
                 //tembak api
                 val chosenX = randomX[Random.nextInt(randomX.size)]
                 val chosenY = randomY[Random.nextInt(randomY.size)]
@@ -224,7 +224,7 @@ fun MapScreen() {
             Spacer(modifier = Modifier.width(8.dp))
             IconButton(
                 onClick = { userY-=100 ; userDirection = 0f;  Log.d("User", "User Y: $userY, User X: $userX")},
-                enabled = userY > 100f && isScanning,
+                enabled = userY > -200f && isScanning,
                 modifier = Modifier.size(48.dp)
             ) {
                 Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Move Up")
@@ -233,7 +233,7 @@ fun MapScreen() {
             Spacer(modifier = Modifier.width(8.dp))
             IconButton(
                 onClick = { userY+=100 ; userDirection = 180f; },
-                enabled = userY + 100 < 2340f && isScanning,
+                enabled = userY + 100 < 2970f && isScanning,
                 modifier = Modifier.size(48.dp)
             ) {
                 Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Move Down")
@@ -241,7 +241,7 @@ fun MapScreen() {
             Spacer(modifier = Modifier.width(8.dp))
             IconButton(
                 onClick = { userX+=100 ; userDirection = 90f; },
-                enabled = userX + 100 < 6120f && isScanning,
+                enabled = userX + 100 < 6710f && isScanning,
                 modifier = Modifier.size(48.dp)
             ) {
                 Icon(Icons.Default.KeyboardArrowRight, contentDescription = "Move Right")
@@ -556,6 +556,58 @@ fun WifiListDialog(wifiList: List<ScanResult>, onClose: () -> Unit, floor: Int, 
                             Constants.AP128 -> { apValues["ap128"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
                             Constants.AP129 -> { apValues["ap129"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
                             Constants.AP130 -> { apValues["ap130"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP131 -> { apValues["ap131"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP132 -> { apValues["ap132"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP133 -> { apValues["ap133"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP134 -> { apValues["ap134"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP135 -> { apValues["ap135"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP136 -> { apValues["ap136"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP137 -> { apValues["ap137"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP138 -> { apValues["ap138"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP139 -> { apValues["ap139"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP140 -> { apValues["ap140"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP141 -> { apValues["ap141"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP142 -> { apValues["ap142"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP143 -> { apValues["ap143"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP144 -> { apValues["ap144"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP145 -> { apValues["ap145"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP146 -> { apValues["ap146"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP147 -> { apValues["ap147"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP148 -> { apValues["ap148"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP149 -> { apValues["ap149"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP150 -> { apValues["ap150"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP151 -> { apValues["ap151"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP152 -> { apValues["ap152"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP153 -> { apValues["ap153"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP154 -> { apValues["ap154"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP155 -> { apValues["ap155"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP156 -> { apValues["ap156"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP157 -> { apValues["ap157"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP158 -> { apValues["ap158"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP159 -> { apValues["ap159"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP160 -> { apValues["ap160"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP161 -> { apValues["ap161"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP162 -> { apValues["ap162"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP163 -> { apValues["ap163"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP164 -> { apValues["ap164"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP165 -> { apValues["ap165"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP166 -> { apValues["ap166"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP167 -> { apValues["ap167"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP168 -> { apValues["ap168"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP169 -> { apValues["ap169"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP170 -> { apValues["ap170"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP171 -> { apValues["ap171"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP172 -> { apValues["ap172"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP173 -> { apValues["ap173"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP174 -> { apValues["ap174"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP175 -> { apValues["ap175"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP176 -> { apValues["ap176"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP177 -> { apValues["ap177"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP178 -> { apValues["ap178"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP179 -> { apValues["ap179"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP180 -> { apValues["ap180"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP181 -> { apValues["ap181"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
+                            Constants.AP182 -> { apValues["ap182"] = 10.0.pow(item.level/10.0).toFloat() ; isExist = true }
                         }
 
                         if (isExist) {
@@ -580,8 +632,8 @@ fun WifiListDialog(wifiList: List<ScanResult>, onClose: () -> Unit, floor: Int, 
                     Button(
                         enabled = !isAuto,
                         onClick = {
-                            postFingerprint(apValues, floor, x, y, unregisteredBssid)
                             attempt++
+                            postFingerprint(apValues, floor, x, y, unregisteredBssid, attempt)
                         },
                     ) {
                         Text(text = "Save")
@@ -596,13 +648,11 @@ fun WifiListDialog(wifiList: List<ScanResult>, onClose: () -> Unit, floor: Int, 
 
                     }
 
-                    LaunchedEffect(isAuto) {
+                    LaunchedEffect(apValues) {
                         if (isAuto) {
-                            while (isAuto) {
-                                postFingerprint(apValues, floor, x, y, unregisteredBssid)
-                                attempt++
-                                delay(3000)
-                            }
+                            attempt++
+                            postFingerprint(apValues, floor, x, y, unregisteredBssid, attempt)
+                            Log.v("apvalues", apValues.toString())
                         }
                     }
 
@@ -618,9 +668,9 @@ fun WifiListDialog(wifiList: List<ScanResult>, onClose: () -> Unit, floor: Int, 
     }
 }
 
-fun postFingerprint(apValues: Map<String, Float?>, floor: Int, x: Int, y: Int, unregisteredBssid: Set<Wifi>) {
+fun postFingerprint(apValues: Map<String, Float?>, floor: Int, x: Int, y: Int, unregisteredBssid: Set<Wifi>, attempt: Int) {
     val fingerprint = Fingerprint(
-        attempt = 1,
+        attempt = attempt,
         x = x,
         y = y,
         z = floor,
@@ -764,6 +814,48 @@ fun postFingerprint(apValues: Map<String, Float?>, floor: Int, x: Int, y: Int, u
         ap138 = apValues["ap138"],
         ap139 = apValues["ap139"],
         ap140 = apValues["ap140"],
+        ap141 = apValues["ap141"],
+        ap142 = apValues["ap142"],
+        ap143 = apValues["ap143"],
+        ap144 = apValues["ap144"],
+        ap145 = apValues["ap145"],
+        ap146 = apValues["ap146"],
+        ap147 = apValues["ap147"],
+        ap148 = apValues["ap148"],
+        ap149 = apValues["ap149"],
+        ap150 = apValues["ap150"],
+        ap151 = apValues["ap151"],
+        ap152 = apValues["ap152"],
+        ap153 = apValues["ap153"],
+        ap154 = apValues["ap154"],
+        ap155 = apValues["ap155"],
+        ap156 = apValues["ap156"],
+        ap157 = apValues["ap157"],
+        ap158 = apValues["ap158"],
+        ap159 = apValues["ap159"],
+        ap160 = apValues["ap160"],
+        ap161 = apValues["ap161"],
+        ap162 = apValues["ap162"],
+        ap163 = apValues["ap163"],
+        ap164 = apValues["ap164"],
+        ap165 = apValues["ap165"],
+        ap166 = apValues["ap166"],
+        ap167 = apValues["ap167"],
+        ap168 = apValues["ap168"],
+        ap169 = apValues["ap169"],
+        ap170 = apValues["ap170"],
+        ap171 = apValues["ap171"],
+        ap172 = apValues["ap172"],
+        ap173 = apValues["ap173"],
+        ap174 = apValues["ap174"],
+        ap175 = apValues["ap175"],
+        ap176 = apValues["ap176"],
+        ap177 = apValues["ap177"],
+        ap178 = apValues["ap178"],
+        ap179 = apValues["ap179"],
+        ap180 = apValues["ap180"],
+        ap181 = apValues["ap181"],
+        ap182 = apValues["ap182"],
         wifi = unregisteredBssid
     )
     CoroutineScope(Dispatchers.IO).launch {

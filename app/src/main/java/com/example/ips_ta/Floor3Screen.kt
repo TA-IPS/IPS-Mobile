@@ -33,15 +33,21 @@ fun Floor3Screen(ratio: Float) {
         )
         val path = Path()
 
+        // Lift 1
+        createSquare(path, 2510f, 1800f, 2810f, 2100f)
+
+        // Lift 2
+        createSquare(path, 2810f, 1800f, 3110f, 2100f)
+
         // Tangga
         createSquare(path, 3110f, 1800f, 3710f, 2100f)
 
         // Tembok kiri
-        path.moveTo(line(3110f), line(1800f))
-        path.lineTo(line(3110f), line(1500f))
+        path.moveTo(line(2510f), line(1800f))
+        path.lineTo(line(2510f), line(1500f))
         path.close()
 
-        path.moveTo(line(3110f), line(1500f))
+        path.moveTo(line(2510f), line(1500f))
         path.lineTo(line(3410f), line(1500f))
         path.close()
 
