@@ -1,11 +1,6 @@
 package com.example.ips_ta
 
-data class Fingerprint(
-    val id: Int? = null,
-    val attempt: Int?,
-    val x: Int?,
-    val y: Int?,
-    val z: Int?,
+data class AccessPoint(
     val ap1: Float?,
     val ap2: Float?,
     val ap3: Float?,
@@ -188,6 +183,4 @@ data class Fingerprint(
     val ap180: Float?,
     val ap181: Float?,
     val ap182: Float?,
-    val wifi: Set<Wifi>?
 )
-
