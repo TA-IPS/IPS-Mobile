@@ -57,6 +57,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ips_ta.stepdetector.AccelSensorDetector
 import com.example.ips_ta.stepdetector.OrientationDetector
 import com.example.ips_ta.stepdetector.StepListener
+import com.example.ips_ta.stepdetector.StepPosition
+import com.example.ips_ta.stepdetector.TrajectoryCanvas
 import com.example.ips_ta.stepdetector.TrajectoryViewModel
 import kotlin.math.pow
 import kotlinx.coroutines.CoroutineScope
@@ -65,6 +67,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Timer
 import java.util.TimerTask
+import kotlin.math.cos
+import kotlin.math.sin
 import kotlin.random.Random
 
 
@@ -337,7 +341,7 @@ fun MapScreen() {
                     UserIcon(userX = userX, userY = userY, userDirection = userDirection , ratio = ratio, trajectoryViewModel = trajectoryViewModel)
 
                 }
-
+//                TrajectoryCanvas(trajectoryViewModel = trajectoryViewModel)
                 when(lantai){
                     0 -> Floor0Screen(ratio = ratio)
                     1 -> Floor1Screen(ratio = ratio)
@@ -346,7 +350,11 @@ fun MapScreen() {
                     4 -> Floor4Screen(ratio = ratio)
                     5 -> Floor5Screen(ratio = ratio)
                     6 -> Floor6Screen(ratio = ratio)
+
                 }
+
+
+
             }
 
 
@@ -384,13 +392,22 @@ fun MapScreen() {
                     if (isCounting) {
                         stepDetector?.registerListener(object : StepListener {
                             override fun onStep(count: Int) {
+                                Log.d("Tes", "userX: $userX userY: $userY")
                                 stepCount += count
+                                val orientationRadians = Math.toRadians(orientation.toDouble())
+                                val deltaX = sin(orientationRadians) * 50f
+                                val deltaY = -cos(orientationRadians) * 50f
 
-                                trajectoryViewModel.addStep(orientation)
+                                userX += deltaX.toFloat()
+                                userY += deltaY.toFloat()
+                                userDirection = orientation
+
+                                Log.d("Tes", "ORIENTATION: $orientation userX: $userX userY: $userY")
+//                                trajectoryViewModel.addStep(orientation)
                             }
                         })
                         orientationDetector.start()
-                        trajectoryViewModel.addStep(orientation)
+//                        trajectoryViewModel.addStep(orientation)
                         Log.d("Debug", "isCounting toggled On: $stepDetector")
                     } else {
                         Log.d("Debug", "isCounting toggled Check: $stepDetector")
@@ -426,13 +443,13 @@ fun UserIcon( userX: Float, userY: Float, userDirection: Float, ratio: Float, tr
             path.lineTo((userX - 15f) * ratio, (userY-15f) * ratio)
 
             // PDR
-            trajectoryViewModel.addFirstStepCoordinates(userX * ratio, userY * ratio)
-            val start = trajectoryViewModel.stepPositions.first()
-            path.moveTo(start.x, start.y)
+//            trajectoryViewModel.addFirstStepCoordinates(userX * ratio, userY * ratio)
+//            val start = trajectoryViewModel.stepPositions.first()
+//            path.moveTo(start.x, start.y)
 
-            trajectoryViewModel.stepPositions.forEach { position ->
-                path.lineTo(position.x, position.y)
-            }
+//            trajectoryViewModel.stepPositions.forEach { position ->
+//                path.lineTo(position.x, position.y)
+//            }
 
             drawPath(
                 path = path,

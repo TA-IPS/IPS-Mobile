@@ -7,7 +7,7 @@ import kotlin.math.sin
 
 class TrajectoryViewModel : ViewModel() {
     var stepPositions = mutableStateListOf(StepPosition(0f, 0f))
-        private set
+
 
     fun addStep(orientationDegrees: Float, stepLengthCm: Float = 50f) {
         // Convert degrees to radians for the math functions
