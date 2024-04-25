@@ -4,15 +4,29 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitInstance {
-    private const val BASE_URL = "https://v397kwk5-3000.asse.devtunnels.ms/"
+    private const val BE_BASE_URL = "https://ips-be-oc7uijn2ra-uc.a.run.app/"
+
+    private const val ML_BASE_URL = "https://ips-ml-oc7uijn2ra-uc.a.run.app/"
 
     private val retrofit: Retrofit by lazy {
         Retrofit.Builder()
-            .baseUrl(BASE_URL)
+            .baseUrl(BE_BASE_URL)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
     }
-    val apiService: ApiService by lazy {
-        retrofit.create(ApiService::class.java)
+
+    private val retrofit2: Retrofit by lazy {
+        Retrofit.Builder()
+            .baseUrl(ML_BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+    }
+
+    val BEService: BEService by lazy {
+        retrofit.create(BEService::class.java)
+    }
+
+    val mlApiService: MLService by lazy {
+        retrofit2.create(MLService::class.java)
     }
 }
