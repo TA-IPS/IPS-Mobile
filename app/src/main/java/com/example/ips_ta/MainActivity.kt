@@ -56,9 +56,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.Timer
 import java.util.TimerTask
-import kotlin.random.Random
 
 
 class MainActivity : ComponentActivity() {
@@ -153,35 +153,39 @@ fun MapScreen() {
     var isUserIconShown by remember { mutableStateOf(false) }
     var currentCondition by remember { mutableStateOf("") }
 
-    val randomX = List(60) { (it + 1) * 100 }
-    val randomY = List(20) { (it + 1) * 100 }
-    val randomZ = List(2) { (it) }
     LaunchedEffect(isScanning) {
         if (!isScanning) {
             isPersonFocused = true
             currentCondition = "Determining Location"
 
-            while (true) {
-                delay(2000) // Delay for 2 seconds
-                //tembak api
-                val chosenX = randomX[Random.nextInt(randomX.size)]
-                val chosenY = randomY[Random.nextInt(randomY.size)]
-                val chosenZ = randomZ[Random.nextInt(randomZ.size)]
+            while(true) {
 
-                isUserIconShown = true
-                userX = chosenX.toFloat()
-                userY = chosenY.toFloat()
-                userLantai = chosenZ
+                delay(5000) // Delay for 2 seconds
 
-                currentCondition = "${floorLabels[chosenZ]} x: $chosenX y: $chosenY"
+                CoroutineScope(Dispatchers.Main).launch {
+                    Log.v("MainActivity", "Fetch prediksi")
+                    try {
+                        val prediction = postPrediction(getApAssignment(wifiList))
+                        val coordinates = prediction.predicted_location.split(",")
+                        isUserIconShown = true
+                        userX = coordinates[0].toFloat()
+                        userY = coordinates[1].toFloat()
+                        userLantai = coordinates[2].toInt()
+                        currentCondition = "${floorLabels[userLantai]} x: $userX y: $userY"
 
-                if (isPersonFocused) {
-                    ratio = 0.6f
-                    top=-userY * ratio + 800
-                    left =-userX * ratio + 525
-                    lantai = chosenZ
+                        if (isPersonFocused) {
+                            ratio = 0.6f
+                            top=-userY * ratio + 800
+                            left =-userX * ratio + 525
+                            lantai = userLantai
+                        }
+
+                    } catch (e: Exception) {
+                        Log.e("MainActivity", "Error: ${e.message}")
+                    }
                 }
             }
+
         }
     }
 
@@ -859,7 +863,945 @@ fun postFingerprint(apValues: Map<String, Float?>, floor: Int, x: Int, y: Int, u
         wifi = unregisteredBssid
     )
     CoroutineScope(Dispatchers.IO).launch {
-        RetrofitInstance.apiService.postFingerprint(fingerprint)
+        RetrofitInstance.BEService.postFingerprint(fingerprint)
+//        RetrofitInstance.mlApiService.predict(fingerprint)
     }
 }
+
+fun getApAssignment(wifiList: List<ScanResult>): AccessPoint {
+    val apValues = mutableMapOf<String, Float?>()
+
+    for (item in wifiList) {
+        when (item.BSSID.uppercase()) {
+            Constants.AP1 -> {
+                apValues["ap1"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP2 -> {
+                apValues["ap2"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP3 -> {
+                apValues["ap3"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP4 -> {
+                apValues["ap4"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP5 -> {
+                apValues["ap5"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP6 -> {
+                apValues["ap6"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP7 -> {
+                apValues["ap7"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP8 -> {
+                apValues["ap8"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP9 -> {
+                apValues["ap9"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP10 -> {
+                apValues["ap10"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP11 -> {
+                apValues["ap11"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP12 -> {
+                apValues["ap12"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP13 -> {
+                apValues["ap13"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP14 -> {
+                apValues["ap14"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP15 -> {
+                apValues["ap15"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP16 -> {
+                apValues["ap16"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP17 -> {
+                apValues["ap17"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP18 -> {
+                apValues["ap18"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP19 -> {
+                apValues["ap19"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP20 -> {
+                apValues["ap20"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP21 -> {
+                apValues["ap21"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP22 -> {
+                apValues["ap22"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP23 -> {
+                apValues["ap23"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP24 -> {
+                apValues["ap24"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP25 -> {
+                apValues["ap25"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP26 -> {
+                apValues["ap26"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP27 -> {
+                apValues["ap27"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP28 -> {
+                apValues["ap28"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP29 -> {
+                apValues["ap29"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP30 -> {
+                apValues["ap30"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP31 -> {
+                apValues["ap31"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP32 -> {
+                apValues["ap32"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP33 -> {
+                apValues["ap33"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP34 -> {
+                apValues["ap34"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP35 -> {
+                apValues["ap35"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP36 -> {
+                apValues["ap36"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP37 -> {
+                apValues["ap37"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP38 -> {
+                apValues["ap38"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP39 -> {
+                apValues["ap39"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP40 -> {
+                apValues["ap40"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP41 -> {
+                apValues["ap41"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP42 -> {
+                apValues["ap42"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP43 -> {
+                apValues["ap43"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP44 -> {
+                apValues["ap44"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP45 -> {
+                apValues["ap45"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP46 -> {
+                apValues["ap46"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP47 -> {
+                apValues["ap47"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP48 -> {
+                apValues["ap48"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP49 -> {
+                apValues["ap49"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP50 -> {
+                apValues["ap50"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP51 -> {
+                apValues["ap51"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP52 -> {
+                apValues["ap52"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP53 -> {
+                apValues["ap53"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP54 -> {
+                apValues["ap54"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP55 -> {
+                apValues["ap55"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP56 -> {
+                apValues["ap56"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP57 -> {
+                apValues["ap57"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP58 -> {
+                apValues["ap58"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP59 -> {
+                apValues["ap59"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP60 -> {
+                apValues["ap60"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP61 -> {
+                apValues["ap61"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP62 -> {
+                apValues["ap62"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP63 -> {
+                apValues["ap63"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP64 -> {
+                apValues["ap64"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP65 -> {
+                apValues["ap65"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP66 -> {
+                apValues["ap66"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP67 -> {
+                apValues["ap67"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP68 -> {
+                apValues["ap68"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP69 -> {
+                apValues["ap69"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP70 -> {
+                apValues["ap70"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP71 -> {
+                apValues["ap71"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP72 -> {
+                apValues["ap72"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP73 -> {
+                apValues["ap73"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP74 -> {
+                apValues["ap74"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP75 -> {
+                apValues["ap75"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP76 -> {
+                apValues["ap76"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP77 -> {
+                apValues["ap77"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP78 -> {
+                apValues["ap78"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP79 -> {
+                apValues["ap79"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP80 -> {
+                apValues["ap80"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP81 -> {
+                apValues["ap81"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP82 -> {
+                apValues["ap82"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP83 -> {
+                apValues["ap83"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP84 -> {
+                apValues["ap84"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP85 -> {
+                apValues["ap85"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP86 -> {
+                apValues["ap86"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP87 -> {
+                apValues["ap87"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP88 -> {
+                apValues["ap88"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP89 -> {
+                apValues["ap89"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP90 -> {
+                apValues["ap90"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP91 -> {
+                apValues["ap91"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP92 -> {
+                apValues["ap92"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP93 -> {
+                apValues["ap93"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP94 -> {
+                apValues["ap94"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP95 -> {
+                apValues["ap95"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP96 -> {
+                apValues["ap96"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP97 -> {
+                apValues["ap97"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP98 -> {
+                apValues["ap98"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP99 -> {
+                apValues["ap99"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP100 -> {
+                apValues["ap100"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP101 -> {
+                apValues["ap101"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP102 -> {
+                apValues["ap102"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP103 -> {
+                apValues["ap103"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP104 -> {
+                apValues["ap104"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP105 -> {
+                apValues["ap105"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP106 -> {
+                apValues["ap106"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP107 -> {
+                apValues["ap107"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP108 -> {
+                apValues["ap108"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP109 -> {
+                apValues["ap109"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP110 -> {
+                apValues["ap110"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP111 -> {
+                apValues["ap111"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP112 -> {
+                apValues["ap112"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP113 -> {
+                apValues["ap113"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP114 -> {
+                apValues["ap114"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP115 -> {
+                apValues["ap115"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP116 -> {
+                apValues["ap116"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP117 -> {
+                apValues["ap117"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP118 -> {
+                apValues["ap118"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP119 -> {
+                apValues["ap119"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP120 -> {
+                apValues["ap120"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP121 -> {
+                apValues["ap121"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP122 -> {
+                apValues["ap122"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP123 -> {
+                apValues["ap123"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP124 -> {
+                apValues["ap124"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP125 -> {
+                apValues["ap125"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP126 -> {
+                apValues["ap126"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP127 -> {
+                apValues["ap127"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP128 -> {
+                apValues["ap128"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP129 -> {
+                apValues["ap129"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP130 -> {
+                apValues["ap130"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP131 -> {
+                apValues["ap131"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP132 -> {
+                apValues["ap132"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP133 -> {
+                apValues["ap133"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP134 -> {
+                apValues["ap134"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP135 -> {
+                apValues["ap135"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP136 -> {
+                apValues["ap136"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP137 -> {
+                apValues["ap137"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP138 -> {
+                apValues["ap138"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP139 -> {
+                apValues["ap139"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP140 -> {
+                apValues["ap140"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP141 -> {
+                apValues["ap141"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP142 -> {
+                apValues["ap142"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP143 -> {
+                apValues["ap143"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP144 -> {
+                apValues["ap144"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP145 -> {
+                apValues["ap145"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP146 -> {
+                apValues["ap146"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP147 -> {
+                apValues["ap147"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP148 -> {
+                apValues["ap148"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP149 -> {
+                apValues["ap149"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP150 -> {
+                apValues["ap150"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP151 -> {
+                apValues["ap151"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP152 -> {
+                apValues["ap152"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP153 -> {
+                apValues["ap153"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP154 -> {
+                apValues["ap154"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP155 -> {
+                apValues["ap155"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP156 -> {
+                apValues["ap156"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP157 -> {
+                apValues["ap157"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP158 -> {
+                apValues["ap158"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP159 -> {
+                apValues["ap159"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP160 -> {
+                apValues["ap160"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP161 -> {
+                apValues["ap161"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP162 -> {
+                apValues["ap162"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP163 -> {
+                apValues["ap163"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP164 -> {
+                apValues["ap164"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP165 -> {
+                apValues["ap165"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP166 -> {
+                apValues["ap166"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP167 -> {
+                apValues["ap167"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP168 -> {
+                apValues["ap168"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP169 -> {
+                apValues["ap169"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP170 -> {
+                apValues["ap170"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP171 -> {
+                apValues["ap171"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP172 -> {
+                apValues["ap172"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP173 -> {
+                apValues["ap173"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP174 -> {
+                apValues["ap174"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP175 -> {
+                apValues["ap175"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP176 -> {
+                apValues["ap176"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP177 -> {
+                apValues["ap177"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP178 -> {
+                apValues["ap178"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP179 -> {
+                apValues["ap179"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP180 -> {
+                apValues["ap180"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP181 -> {
+                apValues["ap181"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+
+            Constants.AP182 -> {
+                apValues["ap182"] = 10.0.pow(item.level / 10.0).toFloat()
+            }
+        }
+    }
+
+    return AccessPoint(
+        ap1 = apValues["ap1"],
+        ap2 = apValues["ap2"],
+        ap3 = apValues["ap3"],
+        ap4 = apValues["ap4"],
+        ap5 = apValues["ap5"],
+        ap6 = apValues["ap6"],
+        ap7 = apValues["ap7"],
+        ap8 = apValues["ap8"],
+        ap9 = apValues["ap9"],
+        ap10 = apValues["ap10"],
+        ap11 = apValues["ap11"],
+        ap12 = apValues["ap12"],
+        ap13 = apValues["ap13"],
+        ap14 = apValues["ap14"],
+        ap15 = apValues["ap15"],
+        ap16 = apValues["ap16"],
+        ap17 = apValues["ap17"],
+        ap18 = apValues["ap18"],
+        ap19 = apValues["ap19"],
+        ap20 = apValues["ap20"],
+        ap21 = apValues["ap21"],
+        ap22 = apValues["ap22"],
+        ap23 = apValues["ap23"],
+        ap24 = apValues["ap24"],
+        ap25 = apValues["ap25"],
+        ap26 = apValues["ap26"],
+        ap27 = apValues["ap27"],
+        ap28 = apValues["ap28"],
+        ap29 = apValues["ap29"],
+        ap30 = apValues["ap30"],
+        ap31 = apValues["ap31"],
+        ap32 = apValues["ap32"],
+        ap33 = apValues["ap33"],
+        ap34 = apValues["ap34"],
+        ap35 = apValues["ap35"],
+        ap36 = apValues["ap36"],
+        ap37 = apValues["ap37"],
+        ap38 = apValues["ap38"],
+        ap39 = apValues["ap39"],
+        ap40 = apValues["ap40"],
+        ap41 = apValues["ap41"],
+        ap42 = apValues["ap42"],
+        ap43 = apValues["ap43"],
+        ap44 = apValues["ap44"],
+        ap45 = apValues["ap45"],
+        ap46 = apValues["ap46"],
+        ap47 = apValues["ap47"],
+        ap48 = apValues["ap48"],
+        ap49 = apValues["ap49"],
+        ap50 = apValues["ap50"],
+        ap51 = apValues["ap51"],
+        ap52 = apValues["ap52"],
+        ap53 = apValues["ap53"],
+        ap54 = apValues["ap54"],
+        ap55 = apValues["ap55"],
+        ap56 = apValues["ap56"],
+        ap57 = apValues["ap57"],
+        ap58 = apValues["ap58"],
+        ap59 = apValues["ap59"],
+        ap60 = apValues["ap60"],
+        ap61 = apValues["ap61"],
+        ap62 = apValues["ap62"],
+        ap63 = apValues["ap63"],
+        ap64 = apValues["ap64"],
+        ap65 = apValues["ap65"],
+        ap66 = apValues["ap66"],
+        ap67 = apValues["ap67"],
+        ap68 = apValues["ap68"],
+        ap69 = apValues["ap69"],
+        ap70 = apValues["ap70"],
+        ap71 = apValues["ap71"],
+        ap72 = apValues["ap72"],
+        ap73 = apValues["ap73"],
+        ap74 = apValues["ap74"],
+        ap75 = apValues["ap75"],
+        ap76 = apValues["ap76"],
+        ap77 = apValues["ap77"],
+        ap78 = apValues["ap78"],
+        ap79 = apValues["ap79"],
+        ap80 = apValues["ap80"],
+        ap81 = apValues["ap81"],
+        ap82 = apValues["ap82"],
+        ap83 = apValues["ap83"],
+        ap84 = apValues["ap84"],
+        ap85 = apValues["ap85"],
+        ap86 = apValues["ap86"],
+        ap87 = apValues["ap87"],
+        ap88 = apValues["ap88"],
+        ap89 = apValues["ap89"],
+        ap90 = apValues["ap90"],
+        ap91 = apValues["ap91"],
+        ap92 = apValues["ap92"],
+        ap93 = apValues["ap93"],
+        ap94 = apValues["ap94"],
+        ap95 = apValues["ap95"],
+        ap96 = apValues["ap96"],
+        ap97 = apValues["ap97"],
+        ap98 = apValues["ap98"],
+        ap99 = apValues["ap99"],
+        ap100 = apValues["ap100"],
+        ap101 = apValues["ap101"],
+        ap102 = apValues["ap102"],
+        ap103 = apValues["ap103"],
+        ap104 = apValues["ap104"],
+        ap105 = apValues["ap105"],
+        ap106 = apValues["ap106"],
+        ap107 = apValues["ap107"],
+        ap108 = apValues["ap108"],
+        ap109 = apValues["ap109"],
+        ap110 = apValues["ap110"],
+        ap111 = apValues["ap111"],
+        ap112 = apValues["ap112"],
+        ap113 = apValues["ap113"],
+        ap114 = apValues["ap114"],
+        ap115 = apValues["ap115"],
+        ap116 = apValues["ap116"],
+        ap117 = apValues["ap117"],
+        ap118 = apValues["ap118"],
+        ap119 = apValues["ap119"],
+        ap120 = apValues["ap120"],
+        ap121 = apValues["ap121"],
+        ap122 = apValues["ap122"],
+        ap123 = apValues["ap123"],
+        ap124 = apValues["ap124"],
+        ap125 = apValues["ap125"],
+        ap126 = apValues["ap126"],
+        ap127 = apValues["ap127"],
+        ap128 = apValues["ap128"],
+        ap129 = apValues["ap129"],
+        ap130 = apValues["ap130"],
+        ap131 = apValues["ap131"],
+        ap132 = apValues["ap132"],
+        ap133 = apValues["ap133"],
+        ap134 = apValues["ap134"],
+        ap135 = apValues["ap135"],
+        ap136 = apValues["ap136"],
+        ap137 = apValues["ap137"],
+        ap138 = apValues["ap138"],
+        ap139 = apValues["ap139"],
+        ap140 = apValues["ap140"],
+        ap141 = apValues["ap141"],
+        ap142 = apValues["ap142"],
+        ap143 = apValues["ap143"],
+        ap144 = apValues["ap144"],
+        ap145 = apValues["ap145"],
+        ap146 = apValues["ap146"],
+        ap147 = apValues["ap147"],
+        ap148 = apValues["ap148"],
+        ap149 = apValues["ap149"],
+        ap150 = apValues["ap150"],
+        ap151 = apValues["ap151"],
+        ap152 = apValues["ap152"],
+        ap153 = apValues["ap153"],
+        ap154 = apValues["ap154"],
+        ap155 = apValues["ap155"],
+        ap156 = apValues["ap156"],
+        ap157 = apValues["ap157"],
+        ap158 = apValues["ap158"],
+        ap159 = apValues["ap159"],
+        ap160 = apValues["ap160"],
+        ap161 = apValues["ap161"],
+        ap162 = apValues["ap162"],
+        ap163 = apValues["ap163"],
+        ap164 = apValues["ap164"],
+        ap165 = apValues["ap165"],
+        ap166 = apValues["ap166"],
+        ap167 = apValues["ap167"],
+        ap168 = apValues["ap168"],
+        ap169 = apValues["ap169"],
+        ap170 = apValues["ap170"],
+        ap171 = apValues["ap171"],
+        ap172 = apValues["ap172"],
+        ap173 = apValues["ap173"],
+        ap174 = apValues["ap174"],
+        ap175 = apValues["ap175"],
+        ap176 = apValues["ap176"],
+        ap177 = apValues["ap177"],
+        ap178 = apValues["ap178"],
+        ap179 = apValues["ap179"],
+        ap180 = apValues["ap180"],
+        ap181 = apValues["ap181"],
+        ap182 = apValues["ap182"],
+    )
+}
+
+suspend fun postPrediction(apValues: AccessPoint): Prediction {
+    try {
+        return withContext(Dispatchers.IO) {
+            RetrofitInstance.mlApiService.predict(apValues)
+        }
+    } catch (e: Exception) {
+        Log.e("MainActivity", "Error: ${e.message}")
+        throw e
+    }
+}
+
+
+
+
+
 
