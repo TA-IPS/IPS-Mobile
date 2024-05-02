@@ -7,27 +7,24 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.graphics.Paint
 import android.net.wifi.ScanResult
 import android.net.wifi.WifiManager
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.rememberTransformableState
+import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddCircle
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -43,13 +40,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.drawscope.rotate
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -57,12 +58,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ips_ta.stepdetector.AccelSensorDetector
 import com.example.ips_ta.stepdetector.OrientationDetector
 import com.example.ips_ta.stepdetector.StepListener
-import com.example.ips_ta.stepdetector.StepPosition
-import com.example.ips_ta.stepdetector.TrajectoryCanvas
 import com.example.ips_ta.stepdetector.TrajectoryViewModel
 import kotlin.math.pow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -70,7 +70,6 @@ import java.util.Timer
 import java.util.TimerTask
 import kotlin.math.cos
 import kotlin.math.sin
-import kotlin.random.Random
 
 
 class MainActivity : ComponentActivity() {
@@ -90,6 +89,7 @@ class MainActivity : ComponentActivity() {
 
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MapScreen() {
     val context = LocalContext.current
@@ -160,7 +160,7 @@ fun MapScreen() {
 
     var top by remember { mutableFloatStateOf(0f) }
     var left by remember { mutableFloatStateOf(0f) }
-    var ratio by remember { mutableFloatStateOf(0.2f) }
+    var ratio by remember { mutableFloatStateOf(0.375f) }
 
     var userX by remember { mutableFloatStateOf(150f) }
     var userY by remember { mutableFloatStateOf(150f) }
@@ -169,15 +169,20 @@ fun MapScreen() {
     var userDirection by remember { mutableFloatStateOf(180f) }
 
     var showDialog by remember { mutableStateOf(false) }
-//    val screenList = listOf(Floor0Screen(ratio),Floor1Screen(ratio),Floor2Screen(ratio))
-    val floorLabels = listOf("Dasar", "Lantai 1", "Lantai 2", "Lantai 3", "Lantai 4", "Lantai 5", "Lantai 6")
+    var showSettings by remember { mutableStateOf(false) }
+    var showInfo by remember { mutableStateOf(false) }
+    val floorLabels = listOf("D", "1", "2", "3", "4", "5", "6")
 
-    var isScanning by remember { mutableStateOf(false) }
+    var isLocalizationMode by remember { mutableStateOf(true) }
+    var isRegistrationMode by remember { mutableStateOf(false) }
+    var isMLMode by remember { mutableStateOf(false) }
+
     var isPersonFocused by remember { mutableStateOf(false) }
     var isUserIconShown by remember { mutableStateOf(false) }
     var currentCondition by remember { mutableStateOf("") }
 
-    var isCounting by remember { mutableStateOf(false) }
+    var isScanningActive by remember { mutableStateOf(true) }
+    var isPdrActive by remember { mutableStateOf(false) }
     val trajectoryViewModel: TrajectoryViewModel = viewModel()
     var stepDetector: AccelSensorDetector? = AccelSensorDetector(context)
     var orientation by remember { mutableFloatStateOf(0f) }
@@ -185,20 +190,28 @@ fun MapScreen() {
     var orientationDetector: OrientationDetector = OrientationDetector(LocalContext.current) { azimuth ->
         orientation = azimuth
     }
+    var offset by remember { mutableStateOf(Offset(-300f, 0f)) }
+    val state = rememberTransformableState { zoomChange, offsetChange, _ ->
+        ratio *= zoomChange
+        offset += offsetChange
+    }
 
-    LaunchedEffect(isScanning) {
-        if (!isScanning) {
+    var mlUserIcon by remember { mutableStateOf<List<Prediction>>(emptyList()) }
+
+    LaunchedEffect(isLocalizationMode, isScanningActive) {
+        if (isLocalizationMode) {
             isPersonFocused = true
             currentCondition = "Determining Location"
 
-            while(true) {
-
-                delay(5000) // Delay for 2 seconds
-
+            delay(5000) // Delay for 5 seconds
+            do {
+                Log.v("Localization mode", "triggered")
                 CoroutineScope(Dispatchers.Main).launch {
-                    Log.v("MainActivity", "Fetch prediksi")
+                    Toast.makeText(context, "Getting Prediction", Toast.LENGTH_SHORT).show()
                     try {
-                        val prediction = postPrediction(getApAssignment(wifiList))
+                        val apList = getApAssignment(wifiList)
+                        val prediction = getPrediction(apList)
+                        Toast.makeText(context, "New Location Updated", Toast.LENGTH_SHORT).show()
                         val coordinates = prediction.predicted_location.split(",")
                         isUserIconShown = true
                         userX = coordinates[0].toFloat()
@@ -215,9 +228,32 @@ fun MapScreen() {
 
                     } catch (e: Exception) {
                         Log.e("MainActivity", "Error: ${e.message}")
+                        Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
                     }
                 }
-            }
+                delay(5000) // Delay for 5 seconds
+            } while (isScanningActive)
+        }
+    }
+
+    LaunchedEffect(isMLMode, isScanningActive) {
+        if (isMLMode) {
+            currentCondition = "ML Mode"
+            isUserIconShown = false
+
+            do {
+                CoroutineScope(Dispatchers.Main).launch {
+                    Toast.makeText(context, "Getting Prediction", Toast.LENGTH_SHORT).show()
+                    try {
+                        val predictions = getMultiPrediction(getApAssignment(wifiList))
+                        mlUserIcon = predictions
+                    } catch (e: Exception) {
+                        Log.e("MainActivity", "Error: ${e.message}")
+                        Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                    }
+                }
+                delay(5000) // Delay for 5 seconds
+            } while (isScanningActive)
         }
     }
 
@@ -226,91 +262,94 @@ fun MapScreen() {
             wifiManager.startScan()
         }
     }, 2000)
-
-
     Column {
-        Row(
-            modifier = Modifier.padding(8.dp)
-        ) {
-            IconButton(
-                onClick = { ratio += 0.2f },
-                enabled = true,
-                modifier = Modifier.size(48.dp)
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Zoom In")
-            }
-            Spacer(modifier = Modifier.width(8.dp))
-            IconButton(
-                onClick = { ratio -= 0.2f },
-                enabled = ratio > 0.201f,
-                modifier = Modifier.size(48.dp)
-            ) {
-                Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Zoom Out")
-            }
-
-            Spacer(modifier = Modifier.width(8.dp))
-            IconButton(
-                onClick = { ratio = 0.6f; top=-userY*ratio+800 ; left =-userX*ratio + 525; isPersonFocused = true},
-                modifier = Modifier.size(48.dp)) {
-
-                Icon(Icons.Default.LocationOn, contentDescription = "Center")
-            }
-
-            // User Gerak
-            Spacer(modifier = Modifier.width(8.dp))
-            IconButton(
-                onClick = { userY-=100 ; userDirection = 0f;  Log.d("User", "User Y: $userY, User X: $userX")},
-                enabled = userY > -200f && isScanning,
-                modifier = Modifier.size(48.dp)
-            ) {
-                Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Move Up")
-            }
-            // User Gerak
-            Spacer(modifier = Modifier.width(8.dp))
-            IconButton(
-                onClick = { userY+=100 ; userDirection = 180f; },
-                enabled = userY + 100 < 2970f && isScanning,
-                modifier = Modifier.size(48.dp)
-            ) {
-                Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Move Down")
-            }
-            Spacer(modifier = Modifier.width(8.dp))
-            IconButton(
-                onClick = { userX+=100 ; userDirection = 90f; },
-                enabled = userX + 100 < 6710f && isScanning,
-                modifier = Modifier.size(48.dp)
-            ) {
-                Icon(Icons.Default.KeyboardArrowRight, contentDescription = "Move Right")
-            }
-            Spacer(modifier = Modifier.width(8.dp))
-            IconButton(
-                onClick = { userX-=100 ; userDirection = 270f; },
-                enabled = userX > 100f && isScanning,
-                modifier = Modifier.size(48.dp)
-            ) {
-                Icon(Icons.Default.KeyboardArrowLeft, contentDescription = "Move Left")
-            }
-        }
+//        Row(
+//            modifier = Modifier.padding(8.dp)
+//        ) {
+//            IconButton(
+//                onClick = { ratio += 0.2f },
+//                enabled = true,
+//                modifier = Modifier.size(48.dp)
+//            ) {
+//                Icon(Icons.Default.Add, contentDescription = "Zoom In")
+//            }
+//            Spacer(modifier = Modifier.width(8.dp))
+//            IconButton(
+//                onClick = { ratio -= 0.2f },
+//                enabled = ratio > 0.201f,
+//                modifier = Modifier.size(48.dp)
+//            ) {
+//                Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Zoom Out")
+//            }
+//
+//            Spacer(modifier = Modifier.width(8.dp))
+//            IconButton(
+//                onClick = { ratio = 0.6f; top=-userY*ratio+800 ; left =-userX*ratio + 525; isPersonFocused = true},
+//                modifier = Modifier.size(48.dp)) {
+//
+//                Icon(Icons.Default.LocationOn, contentDescription = "Center")
+//            }
+//
+//            // User Gerak
+//            Spacer(modifier = Modifier.width(8.dp))
+//            IconButton(
+//                onClick = { userY-=100 ; userDirection = 0f;  Log.d("User", "User Y: $userY, User X: $userX")},
+//                enabled = userY > -200f && isScanning,
+//                modifier = Modifier.size(48.dp)
+//            ) {
+//                Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Move Up")
+//            }
+//            // User Gerak
+//            Spacer(modifier = Modifier.width(8.dp))
+//            IconButton(
+//                onClick = { userY+=100 ; userDirection = 180f; },
+//                enabled = userY + 100 < 2970f && isScanning,
+//                modifier = Modifier.size(48.dp)
+//            ) {
+//                Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Move Down")
+//            }
+//            Spacer(modifier = Modifier.width(8.dp))
+//            IconButton(
+//                onClick = { userX+=100 ; userDirection = 90f; },
+//                enabled = userX + 100 < 6710f && isScanning,
+//                modifier = Modifier.size(48.dp)
+//            ) {
+//                Icon(Icons.Default.KeyboardArrowRight, contentDescription = "Move Right")
+//            }
+//            Spacer(modifier = Modifier.width(8.dp))
+//            IconButton(
+//                onClick = { userX-=100 ; userDirection = 270f; },
+//                enabled = userX > 100f && isScanning,
+//                modifier = Modifier.size(48.dp)
+//            ) {
+//                Icon(Icons.Default.KeyboardArrowLeft, contentDescription = "Move Left")
+//            }
+//        }
         Row (
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.End
         ) {
-            Text(
-                text = floorLabels[lantai],
-                style = MaterialTheme.typography.headlineMedium,
-                textAlign = TextAlign.Center
-            )
-            Switch(
-                checked = isScanning,
-                onCheckedChange = {
-                    isScanning = it
-                    if (!isScanning) {
-                        isUserIconShown = false
-                    } else {
-                        currentCondition = "Mode input data"
-                    }
-                }
-            )
+//            Text(
+//                text = floorLabels[lantai],
+//                style = MaterialTheme.typography.headlineMedium,
+//                textAlign = TextAlign.Center
+//            )
+//            Switch(
+//                checked = isRegistrationMode,
+//                onCheckedChange = {
+//                    isRegistrationMode = it
+//                    if (!isRegistrationMode) {
+//                        isUserIconShown = false
+//                    } else {
+//                        currentCondition = "Mode input data"
+//                    }
+//                }
+//            )
+            IconButton(
+                onClick = { showSettings = true}
+            ) {
+                Icon(Icons.Default.Settings, contentDescription = "Show Settings")
+            }
         }
         Text(
             text = currentCondition,
@@ -318,31 +357,117 @@ fun MapScreen() {
             textAlign = TextAlign.Center
         )
 
+        if (showSettings) {
+            SettingsDialog(
+                isLocalization = isLocalizationMode,
+                isRegistration = isRegistrationMode,
+                isMlTest = isMLMode,
+                isPdrActive = isPdrActive,
+                isScanningActive = isScanningActive,
+            ) {
+                pdrActive, scanningActive, localization, registration, mlTest ->
+                isPdrActive = pdrActive
+                isScanningActive = scanningActive
+                isLocalizationMode = localization
+                isRegistrationMode = registration
+                isMLMode = mlTest
+                showSettings = false
+
+                if (isPdrActive) {
+                    stepDetector?.registerListener(object : StepListener {
+                        override fun onStep(count: Int) {
+                            Log.d("Tes", "userX: $userX userY: $userY")
+                            stepCount += count
+                            val orientationRadians = Math.toRadians(orientation.toDouble())
+                            val deltaX = sin(orientationRadians) * 50f
+                            val deltaY = -cos(orientationRadians) * 50f
+
+                            userX += deltaX.toFloat()
+                            userY += deltaY.toFloat()
+                            userDirection = orientation
+
+                            Log.d("Tes", "ORIENTATION: $orientation userX: $userX userY: $userY")
+//                                trajectoryViewModel.addStep(orientation)
+                        }
+                    })
+                    orientationDetector.start()
+//                        trajectoryViewModel.addStep(orientation)
+                    Log.d("Debug", "isCounting toggled On: $stepDetector")
+                } else {
+                    Log.d("Debug", "isCounting toggled Check: $stepDetector")
+                    stepDetector?.unregisterListener()
+                    Log.d("Debug", "isCounting toggled OFF JING: $stepDetector")
+                }
+            }
+        }
+
         if (showDialog) {
             WifiListDialog(wifiList = wifiList, onClose = { showDialog = false }, floor = lantai, x = userX.toInt(), y = userY.toInt())
+        }
+
+        if (showInfo) {
+            InfoDialog(mlUserIcon = mlUserIcon, onClose = { showInfo = false })
         }
 
         Box(
             Modifier
                 .fillMaxSize()
-                .pointerInput(Unit) {
-                    detectDragGestures { _, dragAmount ->
-                        top += dragAmount.y
-                        left += dragAmount.x
-                        isPersonFocused = false
-                    }
-                }
+//                .pointerInput(Unit) {
+//                    detectDragGestures { _, dragAmount ->
+//                        top += dragAmount.y
+//                        left += dragAmount.x
+//                        isPersonFocused = false
+//                    }
+//                    detectTransformGestures(
+//                        onGesture = { gestureCentroid, gesturePan, gestureZoom, gestureRotate ->
+//                            Log.v("ratio value", "$gestureZoom")
+//                            Log.v("centroid value", "$gestureCentroid")
+//                            Log.v("pan value", "$gesturePan")
+//                            Log.v("rotate value", "$gestureRotate")
+//                            ratio += zoom
+//                        }
+//                    )
+//                }
+                .transformable(state = state)
         ) {
             Box(
                 Modifier
-                    .offset { IntOffset(left.toInt(), top.toInt()) }
+                    .graphicsLayer(
+                        scaleX = ratio,
+                        scaleY = ratio,
+                        translationX = offset.x,
+                        translationY = offset.y
+                    )
 
             ) {
-                // Cek Jika Level 0 tampilkan Floor0Screen, Level 1 tampilkan Floor1Screen
-                if(lantai == userLantai && isUserIconShown){
-                    UserIcon(userX = userX, userY = userY, userDirection = userDirection , ratio = ratio, trajectoryViewModel = trajectoryViewModel)
-
+                if(lantai == userLantai && isUserIconShown && !isMLMode) {
+                    Log.v("Lantai", "$lantai")
+                    Log.v("UserLantai", "$userLantai")
+                    UserIcon(userX = userX, userY = userY, userDirection = userDirection , ratio = ratio, trajectoryViewModel = trajectoryViewModel, isMlMode = false, mlModel = "")
                 }
+                if (isMLMode && mlUserIcon.isNotEmpty()) {
+                    val locations: MutableMap<List<Int>, MutableList<String>> = mutableMapOf()
+                    for ((index, prediction) in mlUserIcon.withIndex()) {
+                        val coordinates = prediction.predicted_location.split(",")
+                        locations.getOrPut(listOf(coordinates[0].toInt(), coordinates[1].toInt(), coordinates[2].toInt())) {
+                            mutableListOf()
+                        }.add(getModelName(index))
+                    }
+                    for ((coordinates, models) in locations) {
+                        if (coordinates[2] == lantai) {
+                            UserIcon(
+                                userX = coordinates[0].toFloat(),
+                                userY = coordinates[1].toFloat(),
+                                userDirection = orientation,
+                                ratio = ratio,
+                                trajectoryViewModel = trajectoryViewModel,
+                                isMlMode = true,
+                                mlModel = models.joinToString(", ")
+                            )
+                        }
+                    }
+                }
+                // Cek Jika Level 0 tampilkan Floor0Screen, Level 1 tampilkan Floor1Screen
 //                TrajectoryCanvas(trajectoryViewModel = trajectoryViewModel)
                 when(lantai){
                     0 -> Floor0Screen(ratio = ratio)
@@ -361,9 +486,9 @@ fun MapScreen() {
                     .padding(16.dp)
                     .fillMaxSize(),
                 verticalArrangement = Arrangement.Bottom,
-                horizontalAlignment = Alignment.End
+                horizontalAlignment = Alignment.Start
             ) {
-                if (isScanning) {
+                if (isRegistrationMode) {
                     IconButton(
                         onClick = { showDialog = true },
                         modifier = Modifier.size(48.dp)
@@ -372,58 +497,61 @@ fun MapScreen() {
                     }
                 }
                 floorLabels.forEachIndexed { index, label ->
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Button(
-                        onClick = { lantai = index
-                                  userLantai = index
-                                  isPersonFocused = false },
-                        modifier = Modifier
-                            .padding(horizontal = 8.dp)
-                            .width(100.dp)
-                            .height(40.dp)
-                    ) {
-                        Text(label)
-                    }
-                }
-                Button(onClick = {
-                    isCounting = !isCounting
-                    if (isCounting) {
-                        stepDetector?.registerListener(object : StepListener {
-                            override fun onStep(count: Int) {
-                                Log.d("Tes", "userX: $userX userY: $userY")
-                                stepCount += count
-                                val orientationRadians = Math.toRadians(orientation.toDouble())
-                                val deltaX = sin(orientationRadians) * 50f
-                                val deltaY = -cos(orientationRadians) * 50f
-
-                                userX += deltaX.toFloat()
-                                userY += deltaY.toFloat()
-                                userDirection = orientation
-
-                                Log.d("Tes", "ORIENTATION: $orientation userX: $userX userY: $userY")
-//                                trajectoryViewModel.addStep(orientation)
-                            }
-                        })
-                        orientationDetector.start()
-//                        trajectoryViewModel.addStep(orientation)
-                        Log.d("Debug", "isCounting toggled On: $stepDetector")
+                    if (index == lantai) {
+                        Button(
+                            onClick = {
+                                lantai = index
+                                isPersonFocused = false
+                            },
+                            shape = RectangleShape,
+                            contentPadding = PaddingValues(0.dp),
+                            modifier = Modifier
+                                .width(40.dp)
+                                .height(40.dp)
+                        ) {
+                            Text(label)
+                        }
                     } else {
-                        Log.d("Debug", "isCounting toggled Check: $stepDetector")
-                        stepDetector?.unregisterListener()
-                        Log.d("Debug", "isCounting toggled OFF JING: $stepDetector")
+                        FilledTonalButton(
+                            onClick = {
+                                lantai = index
+                                isPersonFocused = false
+                            },
+                            shape = RectangleShape,
+                            contentPadding = PaddingValues(0.dp),
+                            modifier = Modifier
+                                .width(40.dp)
+                                .height(40.dp)
+                        ) {
+                            Text(label)
+                        }
                     }
-                }) {
-                    Text(text = if (isCounting) "Stop Counting" else "Start Counting")
                 }
             }
-
+            if (isMLMode) {
+                Column(
+                    Modifier
+                        .padding(16.dp)
+                        .fillMaxSize(),
+                    verticalArrangement = Arrangement.Bottom,
+                    horizontalAlignment = Alignment.End
+                ) {
+                    FloatingActionButton(
+                        onClick = {
+                            showInfo = true
+                        },
+                    ) {
+                        Icon(Icons.Default.List, contentDescription = "List")
+                    }
+                }
+            }
         }
 
     }
 }
 
 @Composable
-fun UserIcon( userX: Float, userY: Float, userDirection: Float, ratio: Float, trajectoryViewModel: TrajectoryViewModel){
+fun UserIcon( userX: Float, userY: Float, userDirection: Float, ratio: Float, trajectoryViewModel: TrajectoryViewModel, isMlMode: Boolean, mlModel: String){
     Canvas(modifier = Modifier.fillMaxSize()
     ) {
         val userCenter = Offset(userX * ratio, userY * ratio)
@@ -432,13 +560,13 @@ fun UserIcon( userX: Float, userY: Float, userDirection: Float, ratio: Float, tr
             drawCircle(
                 color = Color.Blue,
                 center = Offset(userX * ratio, userY * ratio),
-                radius = 15f * ratio
+                radius = 30f * ratio
             )
 
             val path = Path()
-            path.moveTo((userX + 15f) * ratio, (userY-15f) * ratio)
-            path.lineTo((userX + 0f) * ratio, (userY-25f) * ratio)
-            path.lineTo((userX - 15f) * ratio, (userY-15f) * ratio)
+            path.moveTo((userX + 30f) * ratio, (userY-30f) * ratio)
+            path.lineTo((userX + 0f) * ratio, (userY-50f) * ratio)
+            path.lineTo((userX - 30f) * ratio, (userY-30f) * ratio)
 
             // PDR
 //            trajectoryViewModel.addFirstStepCoordinates(userX * ratio, userY * ratio)
@@ -455,17 +583,28 @@ fun UserIcon( userX: Float, userY: Float, userDirection: Float, ratio: Float, tr
                 style = Stroke(width = 2.dp.toPx())
             )
         }
+
+        if (isMlMode) {
+            val rectSize = 40f * ratio
+            val rectTopRight = Offset(userCenter.x + 20f * ratio, userCenter.y - 20f * ratio)
+            val rectBottomLeft = Offset(rectTopRight.x - rectSize, rectTopRight.y + rectSize)
+
+            // Draw text
+            val text = mlModel
+            drawIntoCanvas {
+                it.nativeCanvas.drawText(
+                    text,
+                    rectBottomLeft.x + (50f * ratio),
+                    rectBottomLeft.y - (20f * ratio), // Adjust Y coordinate for text alignment
+                    Paint().apply {
+                        color = Color.Black.toArgb()
+                        textSize = 32.sp.toPx() * ratio// Set text size
+                    }
+                )
+            }
+        }
     }
 }
-
-
-
-
-
-
-
-
-
 
 @Composable
 fun WifiListDialog(wifiList: List<ScanResult>, onClose: () -> Unit, floor: Int, x: Int, y: Int) {
@@ -741,6 +880,142 @@ fun WifiListDialog(wifiList: List<ScanResult>, onClose: () -> Unit, floor: Int, 
                 }
             }
         }
+    }
+}
+
+@Composable
+fun InfoDialog(mlUserIcon: List<Prediction>, onClose: () -> Unit) {
+    Dialog(onDismissRequest = onClose) {
+        Surface(
+            modifier = Modifier.width(300.dp),
+            shape = MaterialTheme.shapes.medium,
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Text(
+                    text = "ML Model Comparison",
+                    style = MaterialTheme.typography.headlineMedium, color = Color.Black,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                Column() {
+                    mlUserIcon.forEachIndexed { index, it ->
+                        val coordinates = it.predicted_location.split(",")
+                        Row(
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(text = getModelName(index))
+                            Text(text = "Lantai ${coordinates[2]} X: ${coordinates[0]} Y: ${coordinates[1]}")
+                        }
+                    }
+                }
+                Button(onClick = onClose, modifier = Modifier.fillMaxWidth()) {
+                    Text(text = "Close")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun SettingsDialog(isLocalization: Boolean, isRegistration: Boolean, isMlTest: Boolean, isPdrActive: Boolean, isScanningActive: Boolean, onSettings: (Boolean, Boolean, Boolean, Boolean, Boolean) -> Unit) {
+    val selectedOption = remember { mutableIntStateOf(0) }
+    val isPdrActiveState = remember { mutableStateOf(isPdrActive) }
+    val isScanningActiveState = remember { mutableStateOf(isScanningActive) }
+
+    if (isLocalization) {
+        selectedOption.intValue = 0
+    } else if (isRegistration) {
+        selectedOption.intValue = 1
+    } else if (isMlTest) {
+        selectedOption.intValue = 2
+    }
+
+    AlertDialog(
+        onDismissRequest = { },
+        title = {
+            Text(text = "Settings")
+        },
+        text = {
+            Column {
+                Row (
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(text = "PDR")
+                    Switch(
+                        checked = isPdrActiveState.value,
+                        onCheckedChange = { isPdrActiveState.value = !isPdrActiveState.value }
+                    )
+                }
+                Row (
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(text = "Predict Location")
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Switch(
+                        checked = isScanningActiveState.value,
+                        onCheckedChange = { isScanningActiveState.value = !isScanningActiveState.value }
+                    )
+                }
+                Divider()
+                Row (
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(text = "Localization Mode")
+                    Spacer(modifier = Modifier.width(8.dp))
+                    RadioButton(selected = selectedOption.intValue == 0, onClick = { selectedOption.intValue = 0 })
+                }
+                Row (
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(text = "WiFi Registration Mode")
+                    Spacer(modifier = Modifier.width(8.dp))
+                    RadioButton(selected = selectedOption.intValue == 1, onClick = { selectedOption.intValue = 1 })
+                }
+                Row (
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(text = "ML Test Mode")
+                    Spacer(modifier = Modifier.width(8.dp))
+                    RadioButton(selected = selectedOption.intValue == 2, onClick = { selectedOption.intValue = 2 })
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    when (selectedOption.intValue) {
+                        0 -> onSettings(isPdrActiveState.value, isScanningActiveState.value, true, false, false)
+                        1 -> onSettings(isPdrActiveState.value, isScanningActiveState.value, false, true, false)
+                        2 -> onSettings(isPdrActiveState.value, isScanningActiveState.value, false, false, true)
+                    }
+                },
+            ) {
+                Text(text = "Save")
+            }
+        }
+    )
+}
+
+fun getModelName(index: Int): String {
+    return when (index) {
+        0 -> "RF"
+        1 -> "SVM"
+        2 -> "KNN"
+        3 -> "GNB"
+        else -> "CNN"
     }
 }
 
@@ -1674,6 +1949,7 @@ fun getApAssignment(wifiList: List<ScanResult>): AccessPoint {
             }
         }
     }
+    Log.v("Jumlah ap values", apValues.size.toString())
 
     return AccessPoint(
         ap1 = apValues["ap1"],
@@ -1861,10 +2137,10 @@ fun getApAssignment(wifiList: List<ScanResult>): AccessPoint {
     )
 }
 
-suspend fun postPrediction(apValues: AccessPoint): Prediction {
+suspend fun getPrediction(apValues: AccessPoint): Prediction {
     try {
         return withContext(Dispatchers.IO) {
-            RetrofitInstance.mlApiService.predict(apValues)
+            RetrofitInstance.mlApiService.predictRf(apValues)
         }
     } catch (e: Exception) {
         Log.e("MainActivity", "Error: ${e.message}")
@@ -1872,6 +2148,28 @@ suspend fun postPrediction(apValues: AccessPoint): Prediction {
     }
 }
 
+suspend fun getMultiPrediction(apValues: AccessPoint): List<Prediction> {
+    try {
+        return withContext(Dispatchers.IO) {
+            val predictionRfDeferred = async { RetrofitInstance.mlApiService.predictRf(apValues) }
+            val predictionSvmDeferred = async { RetrofitInstance.mlApiService.predictSvm(apValues) }
+            val predictionKnnDeferred = async { RetrofitInstance.mlApiService.predictKnn(apValues) }
+            val predictionGnbDeferred = async { RetrofitInstance.mlApiService.predictGnb(apValues) }
+            val predictionCnnDeferred = async { RetrofitInstance.mlApiService.predictCnn(apValues) }
+
+            listOf(
+                predictionRfDeferred.await(),
+                predictionSvmDeferred.await(),
+                predictionKnnDeferred.await(),
+                predictionGnbDeferred.await(),
+                predictionCnnDeferred.await()
+            )
+        }
+    } catch (e: Exception) {
+        Log.e("MainActivity", "Error: ${e.message}")
+        throw e
+    }
+}
 
 
 
