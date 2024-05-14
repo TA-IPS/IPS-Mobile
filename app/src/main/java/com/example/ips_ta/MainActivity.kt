@@ -22,8 +22,14 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddCircle
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -48,6 +54,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -180,6 +187,8 @@ fun MapScreen() {
     var isPersonFocused by remember { mutableStateOf(false) }
     var isUserIconShown by remember { mutableStateOf(false) }
     var currentCondition by remember { mutableStateOf("") }
+    var isFetching by remember { mutableStateOf(true) }
+    var confidenceList by remember { mutableStateOf("")}
 
     var isScanningActive by remember { mutableStateOf(true) }
     var isPdrActive by remember { mutableStateOf(false) }
@@ -194,38 +203,41 @@ fun MapScreen() {
     val state = rememberTransformableState { zoomChange, offsetChange, _ ->
         ratio *= zoomChange
         offset += offsetChange
+        isPersonFocused = false
+        Log.v("Transformable", "offset: ${offset.x}, ${offset.y}")
     }
 
     var mlUserIcon by remember { mutableStateOf<List<Prediction>>(emptyList()) }
 
     LaunchedEffect(isLocalizationMode, isScanningActive) {
         if (isLocalizationMode) {
-            isPersonFocused = true
             currentCondition = "Determining Location"
+            isFetching = true
 
             delay(5000) // Delay for 5 seconds
             do {
                 Log.v("Localization mode", "triggered")
                 CoroutineScope(Dispatchers.Main).launch {
-                    Toast.makeText(context, "Getting Prediction", Toast.LENGTH_SHORT).show()
+                    isFetching = true
+                    currentCondition = "Determining Location"
                     try {
                         val apList = getApAssignment(wifiList)
-                        val prediction = getPrediction(apList)
-                        Toast.makeText(context, "New Location Updated", Toast.LENGTH_SHORT).show()
-                        val coordinates = prediction.predicted_location.split(",")
-                        isUserIconShown = true
-                        userX = coordinates[0].toFloat()
-                        userY = coordinates[1].toFloat()
-                        userLantai = coordinates[2].toInt()
-                        currentCondition = "${floorLabels[userLantai]} x: $userX y: $userY"
-
-                        if (isPersonFocused) {
-                            ratio = 0.6f
-                            top=-userY * ratio + 800
-                            left =-userX * ratio + 525
-                            lantai = userLantai
-                        }
-
+//                        if (apList.apAmount!! <= 3) {
+//                            Toast.makeText(context, "Not enough APs, please move", Toast.LENGTH_SHORT).show()
+//                        } else {
+                            val predictions = getPrediction(apList)
+                            val coordinates = processPrediction(predictions)
+                            isUserIconShown = true
+                            isFetching = false
+                            userX = coordinates.x.toFloat()
+                            userY = coordinates.y.toFloat()
+                            userLantai = coordinates.z.toInt()
+                            confidenceList = ""
+                            for (prediction in predictions.data) {
+                                confidenceList += "${prediction.x}, ${prediction.y}, ${prediction.z}: ${prediction.confidence}\n"
+                            }
+                            currentCondition = "X: ${userX.toInt()} Y: ${userY.toInt()} Lt: $userLantai"
+//                        }
                     } catch (e: Exception) {
                         Log.e("MainActivity", "Error: ${e.message}")
                         Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
@@ -238,15 +250,19 @@ fun MapScreen() {
 
     LaunchedEffect(isMLMode, isScanningActive) {
         if (isMLMode) {
-            currentCondition = "ML Mode"
+            currentCondition = "Determining Location"
             isUserIconShown = false
+            isFetching = true
 
             do {
                 CoroutineScope(Dispatchers.Main).launch {
-                    Toast.makeText(context, "Getting Prediction", Toast.LENGTH_SHORT).show()
+                    isFetching = true
+                    currentCondition = "Determining Location"
                     try {
                         val predictions = getMultiPrediction(getApAssignment(wifiList))
                         mlUserIcon = predictions
+                        isFetching = false
+                        currentCondition = "ML Mode"
                     } catch (e: Exception) {
                         Log.e("MainActivity", "Error: ${e.message}")
                         Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
@@ -262,101 +278,35 @@ fun MapScreen() {
             wifiManager.startScan()
         }
     }, 2000)
+
     Column {
-//        Row(
-//            modifier = Modifier.padding(8.dp)
-//        ) {
-//            IconButton(
-//                onClick = { ratio += 0.2f },
-//                enabled = true,
-//                modifier = Modifier.size(48.dp)
-//            ) {
-//                Icon(Icons.Default.Add, contentDescription = "Zoom In")
-//            }
-//            Spacer(modifier = Modifier.width(8.dp))
-//            IconButton(
-//                onClick = { ratio -= 0.2f },
-//                enabled = ratio > 0.201f,
-//                modifier = Modifier.size(48.dp)
-//            ) {
-//                Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Zoom Out")
-//            }
-//
-//            Spacer(modifier = Modifier.width(8.dp))
-//            IconButton(
-//                onClick = { ratio = 0.6f; top=-userY*ratio+800 ; left =-userX*ratio + 525; isPersonFocused = true},
-//                modifier = Modifier.size(48.dp)) {
-//
-//                Icon(Icons.Default.LocationOn, contentDescription = "Center")
-//            }
-//
-//            // User Gerak
-//            Spacer(modifier = Modifier.width(8.dp))
-//            IconButton(
-//                onClick = { userY-=100 ; userDirection = 0f;  Log.d("User", "User Y: $userY, User X: $userX")},
-//                enabled = userY > -200f && isScanning,
-//                modifier = Modifier.size(48.dp)
-//            ) {
-//                Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Move Up")
-//            }
-//            // User Gerak
-//            Spacer(modifier = Modifier.width(8.dp))
-//            IconButton(
-//                onClick = { userY+=100 ; userDirection = 180f; },
-//                enabled = userY + 100 < 2970f && isScanning,
-//                modifier = Modifier.size(48.dp)
-//            ) {
-//                Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Move Down")
-//            }
-//            Spacer(modifier = Modifier.width(8.dp))
-//            IconButton(
-//                onClick = { userX+=100 ; userDirection = 90f; },
-//                enabled = userX + 100 < 6710f && isScanning,
-//                modifier = Modifier.size(48.dp)
-//            ) {
-//                Icon(Icons.Default.KeyboardArrowRight, contentDescription = "Move Right")
-//            }
-//            Spacer(modifier = Modifier.width(8.dp))
-//            IconButton(
-//                onClick = { userX-=100 ; userDirection = 270f; },
-//                enabled = userX > 100f && isScanning,
-//                modifier = Modifier.size(48.dp)
-//            ) {
-//                Icon(Icons.Default.KeyboardArrowLeft, contentDescription = "Move Left")
-//            }
-//        }
         Row (
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End
+            modifier = Modifier.fillMaxWidth().padding(start = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-//            Text(
-//                text = floorLabels[lantai],
-//                style = MaterialTheme.typography.headlineMedium,
-//                textAlign = TextAlign.Center
-//            )
-//            Switch(
-//                checked = isRegistrationMode,
-//                onCheckedChange = {
-//                    isRegistrationMode = it
-//                    if (!isRegistrationMode) {
-//                        isUserIconShown = false
-//                    } else {
-//                        currentCondition = "Mode input data"
-//                    }
-//                }
-//            )
+            Text(
+                text = currentCondition,
+                style = MaterialTheme.typography.headlineSmall,
+                textAlign = TextAlign.Center
+            )
             IconButton(
                 onClick = { showSettings = true}
             ) {
                 Icon(Icons.Default.Settings, contentDescription = "Show Settings")
             }
         }
+        if (isFetching) {
+            LinearProgressIndicator(
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+
         Text(
-            text = currentCondition,
-            style = MaterialTheme.typography.headlineSmall,
+            text = confidenceList,
+            style = MaterialTheme.typography.bodySmall,
             textAlign = TextAlign.Center
         )
-
         if (showSettings) {
             SettingsDialog(
                 isLocalization = isLocalizationMode,
@@ -412,22 +362,6 @@ fun MapScreen() {
         Box(
             Modifier
                 .fillMaxSize()
-//                .pointerInput(Unit) {
-//                    detectDragGestures { _, dragAmount ->
-//                        top += dragAmount.y
-//                        left += dragAmount.x
-//                        isPersonFocused = false
-//                    }
-//                    detectTransformGestures(
-//                        onGesture = { gestureCentroid, gesturePan, gestureZoom, gestureRotate ->
-//                            Log.v("ratio value", "$gestureZoom")
-//                            Log.v("centroid value", "$gestureCentroid")
-//                            Log.v("pan value", "$gesturePan")
-//                            Log.v("rotate value", "$gestureRotate")
-//                            ratio += zoom
-//                        }
-//                    )
-//                }
                 .transformable(state = state)
         ) {
             Box(
@@ -440,9 +374,13 @@ fun MapScreen() {
                     )
 
             ) {
-                if(lantai == userLantai && isUserIconShown && !isMLMode) {
-                    Log.v("Lantai", "$lantai")
-                    Log.v("UserLantai", "$userLantai")
+                if (lantai == userLantai && isUserIconShown && isLocalizationMode) {
+                    UserIcon(userX = userX, userY = userY, userDirection = userDirection , ratio = ratio, trajectoryViewModel = trajectoryViewModel, isMlMode = false, mlModel = "")
+                }
+                if (isRegistrationMode) {
+                    isFetching = false
+                    currentCondition = "Registration Mode"
+                    userLantai = lantai
                     UserIcon(userX = userX, userY = userY, userDirection = userDirection , ratio = ratio, trajectoryViewModel = trajectoryViewModel, isMlMode = false, mlModel = "")
                 }
                 if (isMLMode && mlUserIcon.isNotEmpty()) {
@@ -467,8 +405,6 @@ fun MapScreen() {
                         }
                     }
                 }
-                // Cek Jika Level 0 tampilkan Floor0Screen, Level 1 tampilkan Floor1Screen
-//                TrajectoryCanvas(trajectoryViewModel = trajectoryViewModel)
                 when(lantai){
                     0 -> Floor0Screen(ratio = ratio)
                     1 -> Floor1Screen(ratio = ratio)
@@ -480,6 +416,11 @@ fun MapScreen() {
                 }
             }
 
+            if (isPersonFocused) {
+                ratio = 0.6f
+                offset = Offset(-userX * ratio + 1000, -userY * ratio + 800)
+                lantai = userLantai
+            }
 
             Column(
                 Modifier
@@ -488,14 +429,6 @@ fun MapScreen() {
                 verticalArrangement = Arrangement.Bottom,
                 horizontalAlignment = Alignment.Start
             ) {
-                if (isRegistrationMode) {
-                    IconButton(
-                        onClick = { showDialog = true },
-                        modifier = Modifier.size(48.dp)
-                    ) {
-                        Icon(Icons.Default.AddCircle, contentDescription = "Show Modal")
-                    }
-                }
                 floorLabels.forEachIndexed { index, label ->
                     if (index == lantai) {
                         Button(
@@ -528,6 +461,26 @@ fun MapScreen() {
                     }
                 }
             }
+            if (isLocalizationMode) {
+                Column(
+                    Modifier
+                        .padding(16.dp)
+                        .fillMaxSize(),
+                    verticalArrangement = Arrangement.Bottom,
+                    horizontalAlignment = Alignment.End
+                ) {
+                    FloatingActionButton(
+                        onClick = {
+                            isPersonFocused = true
+//                            ratio = 0.6f
+//                            offset = Offset(-userX * ratio + 1000, -userY * ratio + 800)
+//                            lantai = userLantai
+                        },
+                    ) {
+                        Icon(Icons.Default.LocationOn, contentDescription = "List")
+                    }
+                }
+            }
             if (isMLMode) {
                 Column(
                     Modifier
@@ -545,10 +498,141 @@ fun MapScreen() {
                     }
                 }
             }
+            if (isRegistrationMode) {
+                Column(
+                    Modifier
+                        .padding(16.dp)
+                        .fillMaxSize(),
+                    verticalArrangement = Arrangement.Bottom,
+                    horizontalAlignment = Alignment.Start
+                ) {
+                    Column(
+                        Modifier
+                            .padding(start = 64.dp, bottom = 16.dp)
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            IconButton(
+                                onClick = { userY -= 500; userDirection = 0f; },
+                                modifier = Modifier
+                                    .size(48.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.keyboard_double_arrow_up_foreground),
+                                    contentDescription = "Move Double Up"
+                                )
+                            }
+                        }
+                        Row(
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            IconButton(
+                                onClick = { userY -= 100; userDirection = 0f; },
+                                modifier = Modifier
+                                    .size(48.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.keyboard_arrow_up_foreground),
+                                    contentDescription = "Move Up"
+                                )
+                            }
+                        }
+                        Row(
+                            horizontalArrangement = Arrangement.SpaceEvenly,
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            IconButton(
+                                onClick = { userX -= 500; userDirection = 270f; },
+                                modifier = Modifier
+                                    .size(48.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.keyboard_double_arrow_left_foreground),
+                                    contentDescription = "Move Double Left"
+                                )
+                            }
+                            IconButton(
+                                onClick = { userX -= 100; userDirection = 270f; },
+                                modifier = Modifier
+                                    .size(48.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.keyboard_arrow_left_foreground),
+                                    contentDescription = "Move Left"
+                                )
+                            }
+                            IconButton(
+                                onClick = { showDialog = true },
+                                modifier = Modifier.size(48.dp)
+                            ) {
+                                Icon(Icons.Default.Add, contentDescription = "Show Modal")
+                            }
+                            IconButton(
+                                onClick = { userX+=100; userDirection = 90f; },
+                                modifier = Modifier
+                                    .size(48.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.keyboard_arrow_right_foreground),
+                                    contentDescription = "Move Right"
+                                )
+                            }
+                            IconButton(
+                                onClick = { userX += 500; userDirection = 90f; },
+                                modifier = Modifier
+                                    .size(48.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.keyboard_double_arrow_right_foreground),
+                                    contentDescription = "Move Double Right"
+                                )
+                            }
+                        }
+                        Row(
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            IconButton(
+                                onClick = { userY += 100 ; userDirection = 180f; },
+                                modifier = Modifier
+                                    .size(48.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.keyboard_arrow_down_foreground),
+                                    contentDescription = "Move Down"
+                                )
+                            }
+                        }
+                        Row(
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            IconButton(
+                                onClick = { userY += 500; userDirection = 180f; },
+                                modifier = Modifier
+                                    .size(48.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.keyboard_double_arrow_down_foreground),
+                                    contentDescription = "Move Double Down"
+                                )
+                            }
+                        }
+                    }
+                }
+            }
         }
-
     }
 }
+
 
 @Composable
 fun UserIcon( userX: Float, userY: Float, userDirection: Float, ratio: Float, trajectoryViewModel: TrajectoryViewModel, isMlMode: Boolean, mlModel: String){
@@ -924,6 +1008,7 @@ fun SettingsDialog(isLocalization: Boolean, isRegistration: Boolean, isMlTest: B
     val selectedOption = remember { mutableIntStateOf(0) }
     val isPdrActiveState = remember { mutableStateOf(isPdrActive) }
     val isScanningActiveState = remember { mutableStateOf(isScanningActive) }
+    val isPdrButtonEnabled = remember { mutableStateOf(isLocalization)}
 
     if (isLocalization) {
         selectedOption.intValue = 0
@@ -948,7 +1033,8 @@ fun SettingsDialog(isLocalization: Boolean, isRegistration: Boolean, isMlTest: B
                     Text(text = "PDR")
                     Switch(
                         checked = isPdrActiveState.value,
-                        onCheckedChange = { isPdrActiveState.value = !isPdrActiveState.value }
+                        onCheckedChange = { isPdrActiveState.value = !isPdrActiveState.value },
+                        enabled = isPdrButtonEnabled.value
                     )
                 }
                 Row (
@@ -971,7 +1057,14 @@ fun SettingsDialog(isLocalization: Boolean, isRegistration: Boolean, isMlTest: B
                 ) {
                     Text(text = "Localization Mode")
                     Spacer(modifier = Modifier.width(8.dp))
-                    RadioButton(selected = selectedOption.intValue == 0, onClick = { selectedOption.intValue = 0 })
+                    RadioButton(
+                        selected = selectedOption.intValue == 0,
+                        onClick = {
+                            selectedOption.intValue = 0
+                            isPdrButtonEnabled.value = true
+                            isPdrActiveState.value = true
+                        }
+                    )
                 }
                 Row (
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -980,7 +1073,14 @@ fun SettingsDialog(isLocalization: Boolean, isRegistration: Boolean, isMlTest: B
                 ) {
                     Text(text = "WiFi Registration Mode")
                     Spacer(modifier = Modifier.width(8.dp))
-                    RadioButton(selected = selectedOption.intValue == 1, onClick = { selectedOption.intValue = 1 })
+                    RadioButton(
+                        selected = selectedOption.intValue == 1,
+                        onClick = {
+                            selectedOption.intValue = 1
+                            isPdrButtonEnabled.value = false
+                            isPdrActiveState.value = false
+                        }
+                    )
                 }
                 Row (
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -989,7 +1089,14 @@ fun SettingsDialog(isLocalization: Boolean, isRegistration: Boolean, isMlTest: B
                 ) {
                     Text(text = "ML Test Mode")
                     Spacer(modifier = Modifier.width(8.dp))
-                    RadioButton(selected = selectedOption.intValue == 2, onClick = { selectedOption.intValue = 2 })
+                    RadioButton(
+                        selected = selectedOption.intValue == 2,
+                        onClick = {
+                            selectedOption.intValue = 2
+                            isPdrButtonEnabled.value = false
+                            isPdrActiveState.value = false
+                        }
+                    )
                 }
             }
         },
@@ -2134,13 +2241,19 @@ fun getApAssignment(wifiList: List<ScanResult>): AccessPoint {
         ap180 = apValues["ap180"],
         ap181 = apValues["ap181"],
         ap182 = apValues["ap182"],
+        apAmount = apValues.size
     )
 }
 
-suspend fun getPrediction(apValues: AccessPoint): Prediction {
+fun processPrediction(predictions: PredictionList): PredictionNew {
+    Log.v("Prediction", predictions.data.toString())
+    return predictions.data[0]
+}
+
+suspend fun getPrediction(apValues: AccessPoint): PredictionList {
     try {
         return withContext(Dispatchers.IO) {
-            RetrofitInstance.mlApiService.predictRf(apValues)
+            RetrofitInstance.mlApiService.predictRfV2(apValues)
         }
     } catch (e: Exception) {
         Log.e("MainActivity", "Error: ${e.message}")

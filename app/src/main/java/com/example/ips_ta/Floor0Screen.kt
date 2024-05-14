@@ -25,12 +25,12 @@ fun Floor0Screen(ratio: Float) {
         path.close()
     }
     Canvas(modifier = Modifier.fillMaxSize()) {
-        drawRect(
-            color = Color.Gray,
-            // PENTING !!!!!!
-            size = Size(6710f * ratio, 2970f * ratio),
-            style = Stroke(width = 1.dp.toPx())
-        )
+//        drawRect(
+//            color = Color.Gray,
+//            // PENTING !!!!!!
+//            size = Size(6710f * ratio, 2970f * ratio),
+//            style = Stroke(width = 1.dp.toPx())
+//        )
 
         val path = Path()
 
@@ -136,19 +136,17 @@ fun Floor0Screen(ratio: Float) {
         path.lineTo(line(1910f), line(70f))
         path.close()
 
-//        drawPath(
-//            path = path,
-//            color = Color(0xFFAEC6CF),
-//            style = Fill)
+        drawPath(
+            path = path,
+            color = Color(0x14AAD7D9),
+            style = Fill
+        )
 
         drawPath(
             path = path,
-            color = Color.Blue,
+            color = Color(0xFF92C7CF),
             style = Stroke(width = 2.dp.toPx())
         )
-
-
-
     }
 }
 

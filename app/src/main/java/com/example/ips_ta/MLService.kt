@@ -19,8 +19,8 @@ interface MLService {
     @POST("cnn")
     suspend fun predictCnn(@Body accessPoint: AccessPoint): Prediction
 
-    @POST("mlp")
-    suspend fun predictMlp(@Body accessPoint: AccessPoint): Prediction
+    @POST("rfo")
+    suspend fun predictRfV2(@Body accessPoint: AccessPoint): PredictionList
 
 
 }
