@@ -7,6 +7,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 
@@ -24,21 +25,22 @@ fun Floor0Screen(ratio: Float) {
         path.close()
     }
     Canvas(modifier = Modifier.fillMaxSize()) {
-        drawRect(
-            color = Color.Gray,
-            // PENTING !!!!!!
-            size = Size(6710f * ratio, 2970f * ratio),
-            style = Stroke(width = 1.dp.toPx())
-        )
+//        drawRect(
+//            color = Color.Gray,
+//            // PENTING !!!!!!
+//            size = Size(6710f * ratio, 2970f * ratio),
+//            style = Stroke(width = 1.dp.toPx())
+//        )
 
         val path = Path()
 
         // AD 04
-        path.moveTo(line(775f), line(70f))
-        path.lineTo(line(1610f), line(70f))
-        path.lineTo(line(1610f), line(840f))
-        path.lineTo(line(775f), line(840f))
-        path.close()
+        createSquare(path, 775f, 70f, 1610f, 840f)
+//        path.moveTo(line(775f), line(70f))
+//        path.lineTo(line(1610f), line(70f))
+//        path.lineTo(line(1610f), line(840f))
+//        path.lineTo(line(775f), line(840f))
+//        path.close()
 
         // AD 03
         path.moveTo(line(0f), line(840f))
@@ -50,39 +52,19 @@ fun Floor0Screen(ratio: Float) {
         path.close()
 
         // AD 01
-        path.moveTo(line(0f), line(1500f))
-        path.lineTo(line(1010f), line(1500f))
-        path.lineTo(line(1010f), line(2970f))
-        path.lineTo(line(0f), line(2970f))
-        path.close()
+        createSquare(path, 0f, 1500f, 1010f, 2970f)
 
         // AD 02
-        path.moveTo(line(1010f), line(1500f))
-        path.lineTo(line(1610f), line(1500f))
-        path.lineTo(line(1610f), line(2400f))
-        path.lineTo(line(1010f), line(2400f))
-        path.close()
+        createSquare(path, 1010f, 1500f, 1610f, 2400f)
 
         // AD 06
-        path.moveTo(line(1910f), line(70f))
-        path.lineTo(line(2260f), line(70f))
-        path.lineTo(line(2260f), line(840f))
-        path.lineTo(line(1910f), line(840f))
-        path.close()
+        createSquare(path, 1910f, 70f, 2260f, 840f)
 
         // AD 07
-        path.moveTo(line(2260f), line(70f))
-        path.lineTo(line(3410f), line(70f))
-        path.lineTo(line(3410f), line(840f))
-        path.lineTo(line(2260f), line(840f))
-        path.close()
+        createSquare(path, 2260f, 70f, 3410f, 840f)
 
         // AD 17
-        path.moveTo(line(3410f), line(70f))
-        path.lineTo(line(4010f), line(70f))
-        path.lineTo(line(4010f), line(840f))
-        path.lineTo(line(3410f), line(840f))
-        path.close()
+        createSquare(path, 3410f, 70f, 4010f, 840f)
 
         // AD 05
         createSquare(path, 1910f, 840f, 2810f, 1500f)
@@ -127,7 +109,17 @@ fun Floor0Screen(ratio: Float) {
         createSquare(path, 4610f, 1800f, 4910f, 2550f)
 
         // Kantin
-        createSquare(path, 4910f, 0f, 6710f, 2550f)
+        path.moveTo(line(4910f), line(0f))
+        path.lineTo(line(6710f), line(0f))
+        path.close()
+
+        path.moveTo(line(6710f), line(0f))
+        path.lineTo(line(6710f), line(2550f))
+        path.close()
+
+        path.moveTo(line(6710f), line(2550f))
+        path.lineTo(line(4910f), line(2550f))
+        path.close()
 
         // pintu depan
         path.moveTo(line(1610f), line(2400f))
@@ -144,150 +136,17 @@ fun Floor0Screen(ratio: Float) {
         path.lineTo(line(1910f), line(70f))
         path.close()
 
-
-
-//        // AD 04 & 03
-//        path.moveTo(length(0, 0, ratio), length(0, 0, ratio))
-//        path.lineTo(length(0,27, ratio), length(0, 0, ratio))
-//        path.lineTo(length(0,27, ratio), length(3, 26, ratio))
-//        path.lineTo(length(0, 0, ratio), length(3, 26, ratio))
-//        path.close()
-//
-//        // AD 06 & 07
-//        path.moveTo(length(0, 35, ratio), length(0, 0, ratio))
-//        path.lineTo(length(0, 72, ratio), length(0, 0, ratio))
-//        path.lineTo(length(0, 72, ratio), length(3, 16, ratio))
-//        path.lineTo(length(0, 35, ratio), length(3, 16, ratio))
-//        path.close()
-//
-//        // AD 05, 08, 09, asumsi mereka lebar nya sama kek AD 06
-//        path.moveTo(length(0, 35, ratio), length(3, 16, ratio))
-//        path.lineTo(length(0, 72, ratio), length(3, 16, ratio))
-//        path.lineTo(length(0, 72, ratio), length(3, 32, ratio))
-//        path.lineTo(length(0, 35, ratio), length(3, 32, ratio))
-//        path.close()
-//
-//        // AD 01 & 02
-//        path.moveTo(length(0, 0, ratio), length(3, 32, ratio))
-//        path.lineTo(length(0,27, ratio), length(3, 32, ratio))
-//        path.lineTo(length(0,27, ratio), length(39, 0, ratio))
-//        path.lineTo(length(0, 0, ratio), length(39, 0, ratio))
-//        path.close()
-//
-//        // AD10 & lift & pintu tangga
-//        path.moveTo(length(0, 41, ratio), length(3, 39, ratio))
-//        path.lineTo(length(0, 72, ratio), length(3, 39, ratio))
-//        path.lineTo(length(0, 72, ratio), length(3, 47, ratio))
-//        path.lineTo(length(0, 41, ratio), length(3, 47, ratio))
-//        path.close()
-//
-//        // toilet dkk
-//        path.moveTo(length(0, 41, ratio), length(3, 50, ratio))
-//        path.lineTo(length(0, 72, ratio), length(3, 50, ratio))
-//        path.lineTo(length(0, 72, ratio), length(39, 0, ratio))
-//        path.lineTo(length(0, 41, ratio), length(39, 0, ratio))
-//        path.close()
-//
-//        // AD 17
-//        path.moveTo(length(0, 72, ratio), length(0, 0, ratio))
-//        path.lineTo(length(9, 72, ratio), length(0, 0, ratio))
-//        path.lineTo(length(9, 72, ratio), length(16, 0, ratio))
-//        path.lineTo(length(5, 72, ratio), length(16, 0, ratio))
-//        path.lineTo(length(5, 72, ratio), length(14, 0, ratio))
-//        path.lineTo(length(0, 72, ratio), length(14, 0, ratio))
-//        path.close()
-//
-//        // AD 18
-//        path.moveTo(length(0, 72, ratio), length(14, 0, ratio))
-//        path.lineTo(length(5, 72, ratio), length(14, 0, ratio))
-//        path.lineTo(length(5, 72, ratio), length(23, 0, ratio))
-//        path.lineTo(length(0, 72, ratio), length(23, 0, ratio))
-//        path.close()
-//
-//        // AD 22
-//        path.moveTo(length(9, 72, ratio), length(0, 0, ratio))
-//        path.lineTo(length(24, 72, ratio), length(0, 0, ratio))
-//        path.lineTo(length(24, 72, ratio), length(19, 0, ratio))
-//        path.lineTo(length(9, 72, ratio), length(19, 0, ratio))
-//        path.close()
-//
-//        // AD 20
-//        path.moveTo(length(5, 72, ratio), length(29, 0, ratio))
-//        path.lineTo(length(9, 72, ratio), length(29, 0, ratio))
-//        path.lineTo(length(9, 72, ratio), length(39, 0, ratio))
-//        path.lineTo(length(5, 72, ratio), length(39, 0, ratio))
-//        path.close()
-//
-//        // AD 19
-//        path.moveTo(length(9, 72, ratio), length(29, 0, ratio))
-//        path.lineTo(length(17, 72, ratio), length(29, 0, ratio))
-//        path.lineTo(length(17, 72, ratio), length(39, 0, ratio))
-//        path.lineTo(length(9, 72, ratio), length(39, 0, ratio))
-//        path.close()
-//
-//        // AD 21
-//        path.moveTo(length(17, 72, ratio), length(29, 0, ratio))
-//        path.lineTo(length(24, 72, ratio), length(29, 0, ratio))
-//        path.lineTo(length(24, 72, ratio), length(39, 0, ratio))
-//        path.lineTo(length(17, 72, ratio), length(39, 0, ratio))
-//        path.close()
-
-
-//        // AD 17,18
-//        path.moveTo(0 * sizeLantaiKantin + 72 * sizeLantai, 3 * sizeLantaiKantin * ratio)
-//        path.lineTo(9 * sizeLantaiKantin + 72 * sizeLantai, 3 * sizeLantaiKantin * ratio)
-//        path.lineTo(9 * sizeLantaiKantin + 72 * sizeLantai, 16 * sizeLantaiKantin * ratio)
-//        path.lineTo(5 * sizeLantaiKantin + 72 * sizeLantai, 16 * sizeLantaiKantin * ratio)
-//        path.lineTo(5 * sizeLantaiKantin + 72 * sizeLantai, 22 * sizeLantaiKantin * ratio)
-//        path.lineTo(0 * sizeLantaiKantin + 72 * sizeLantai, 22 * sizeLantaiKantin * ratio)
-//        path.close()
-//
-//        // AD 19,20,21
-//        path.moveTo(0 * sizeLantaiKantin + 72 * sizeLantai, 29 * sizeLantaiKantin * ratio)
-//        path.lineTo(0 * sizeLantaiKantin + 72 * sizeLantai, 39 * sizeLantaiKantin * ratio)
-//        path.lineTo(26 * sizeLantaiKantin + 72 * sizeLantai, 39 * sizeLantaiKantin * ratio)
-//        path.lineTo(26 * sizeLantaiKantin + 72 * sizeLantai, 29 * sizeLantaiKantin * ratio)
-//        path.close()
-//
-//        // AD 22
-//        path.moveTo(9 * sizeLantaiKantin + 72 * sizeLantai, 0 * sizeLantaiKantin * ratio)
-//        path.lineTo(9 * sizeLantaiKantin + 72 * sizeLantai, 19 * sizeLantaiKantin * ratio)
-//        path.lineTo(26 * sizeLantaiKantin + 72 * sizeLantai, 19 * sizeLantaiKantin * ratio)
-//        path.lineTo(26 * sizeLantaiKantin + 72 * sizeLantai, 0 * sizeLantaiKantin * ratio)
-//        path.close()
-//
-//        // AD 23
-//        path.moveTo(26 * sizeLantaiKantin + 72 * sizeLantai, 19 * sizeLantaiKantin * ratio)
-//        path.lineTo(26 * sizeLantaiKantin + 72 * sizeLantai, 0 * sizeLantaiKantin * ratio)
-//        path.lineTo(56 * sizeLantaiKantin + 72 * sizeLantai, 0 * sizeLantaiKantin * ratio)
-//        path.lineTo(56 * sizeLantaiKantin + 72 * sizeLantai, 39 * sizeLantaiKantin * ratio)
-//        path.lineTo(26 * sizeLantaiKantin + 72 * sizeLantai, 39 * sizeLantaiKantin * ratio)
-//        path.lineTo(26 * sizeLantaiKantin + 72 * sizeLantai, 29 * sizeLantaiKantin * ratio)
-//
-//
-//
-//        // AD 06
-//        path.moveTo(8 * sizeLantai * ratio, 0 * sizeLantai * ratio)
-//        path.lineTo(8 * sizeLantai * ratio, 15 * sizeLantai * ratio)
-//        path.lineTo(17 * sizeLantai * ratio, 15 * sizeLantai * ratio)
-//        path.lineTo(17 * sizeLantai * ratio, 0 * sizeLantai * ratio)
-//        path.close()
-//
-//        // AD 07
-//        path.moveTo(17 * sizeLantai * ratio, 0 * sizeLantai * ratio)
-//        path.lineTo(45 * sizeLantai * ratio, 0 * sizeLantai * ratio)
-//        path.lineTo(45 * sizeLantai * ratio, 15 * sizeLantai * ratio)
-//        path.lineTo(17 * sizeLantai * ratio, 0 * sizeLantai * ratio)
-//        path.close()
+        drawPath(
+            path = path,
+            color = Color(0x14AAD7D9),
+            style = Fill
+        )
 
         drawPath(
             path = path,
-            color = Color.Blue,
+            color = Color(0xFF92C7CF),
             style = Stroke(width = 2.dp.toPx())
         )
-
-
-
     }
 }
 

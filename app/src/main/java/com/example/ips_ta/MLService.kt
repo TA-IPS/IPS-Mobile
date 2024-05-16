@@ -2,8 +2,25 @@ package com.example.ips_ta
 
 import retrofit2.http.Body
 import retrofit2.http.POST
-import retrofit2.Call
+
 interface MLService {
     @POST("rf")
-    suspend fun predict(@Body accessPoint: AccessPoint): Prediction
+    suspend fun predictRf(@Body accessPoint: AccessPoint): Prediction
+
+    @POST("gnb")
+    suspend fun predictGnb(@Body accessPoint: AccessPoint): Prediction
+
+    @POST("svm")
+    suspend fun predictSvm(@Body accessPoint: AccessPoint): Prediction
+
+    @POST("knn")
+    suspend fun predictKnn(@Body accessPoint: AccessPoint): Prediction
+
+    @POST("cnn")
+    suspend fun predictCnn(@Body accessPoint: AccessPoint): Prediction
+
+    @POST("rfo")
+    suspend fun predictRfV2(@Body accessPoint: AccessPoint): PredictionList
+
+
 }

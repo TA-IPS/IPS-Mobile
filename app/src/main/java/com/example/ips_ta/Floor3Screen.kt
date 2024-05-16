@@ -8,6 +8,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 
@@ -26,11 +27,11 @@ fun Floor3Screen(ratio: Float) {
     }
 
     Canvas(modifier = Modifier.fillMaxSize()) {
-        drawRect(
-            color = Color.Gray,
-            size = Size(6710f * ratio, 2970f * ratio),
-            style = Stroke(width = 1.dp.toPx())
-        )
+//        drawRect(
+//            color = Color.Gray,
+//            size = Size(6710f * ratio, 2970f * ratio),
+//            style = Stroke(width = 1.dp.toPx())
+//        )
         val path = Path()
 
         // Lift 1
@@ -83,7 +84,13 @@ fun Floor3Screen(ratio: Float) {
 
         drawPath(
             path = path,
-            color = Color.Blue,
+            color = Color(0x14AAD7D9),
+            style = Fill
+        )
+
+        drawPath(
+            path = path,
+            color = Color(0xFF92C7CF),
             style = Stroke(width = 2.dp.toPx())
         )
     }

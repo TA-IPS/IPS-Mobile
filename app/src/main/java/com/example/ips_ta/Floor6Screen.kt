@@ -15,11 +15,11 @@ import androidx.compose.ui.unit.dp
 fun Floor6Screen(ratio: Float) {
 
     Canvas(modifier = Modifier.fillMaxSize()) {
-        drawRect(
-            color = Color.Gray,
-            size = Size(800f * ratio, 600f * ratio),
-            style = Stroke(width = 1.dp.toPx())
-        )
+//        drawRect(
+//            color = Color.Gray,
+//            size = Size(800f * ratio, 600f * ratio),
+//            style = Stroke(width = 1.dp.toPx())
+//        )
 
         val path = Path()
         path.moveTo(0 * ratio, 0 * ratio)

@@ -183,4 +183,5 @@ data class AccessPoint(
     val ap180: Float?,
     val ap181: Float?,
     val ap182: Float?,
+    val apAmount: Int?
 )
