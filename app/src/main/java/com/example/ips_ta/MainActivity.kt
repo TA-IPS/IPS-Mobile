@@ -23,6 +23,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AddCircle
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Settings
@@ -72,6 +77,7 @@ import java.util.Timer
 import java.util.TimerTask
 import kotlin.math.cos
 import kotlin.math.sin
+import kotlin.math.sqrt
 
 
 class MainActivity : ComponentActivity() {
@@ -192,9 +198,10 @@ fun MapScreen() {
     var stepListener: StepListener? = null
     var orientation by remember { mutableFloatStateOf(0f) }
     var stepCount by remember { mutableIntStateOf(0) }
-    var orientationDetector: OrientationDetector = OrientationDetector(LocalContext.current) { azimuth ->
+    var orientationDetector = OrientationDetector(LocalContext.current) { azimuth ->
         orientation = azimuth
     }
+    var isPdrResultTaken by remember { mutableStateOf(false) }
     var offset by remember { mutableStateOf(Offset(-300f, 0f)) }
     val state = rememberTransformableState { zoomChange, offsetChange, _ ->
         ratio *= zoomChange
@@ -202,52 +209,77 @@ fun MapScreen() {
         isPersonFocused = false
         Log.v("Transformable", "offset: ${offset.x}, ${offset.y}")
     }
-
-    var mlUserIcon by remember { mutableStateOf<List<Prediction>>(emptyList()) }
     var isFirstPrediction by remember { mutableStateOf(true) }
     var belakang by remember { mutableStateOf(false) }
-    LaunchedEffect(isLocalizationMode, isScanningActive) {
+    var mlUserIcon by remember { mutableStateOf<List<Prediction>>(emptyList()) }
+
+    LaunchedEffect(isLocalizationMode, isScanningActive, isPdrActive) {
         if (isLocalizationMode) {
             currentCondition = "Determining Location"
             isFetching = true
+            isPdrResultTaken = false
+
+            val minimumSteps = 4
+            var isUncertain = false
+            var isInitialScan = true
 
             delay(5000) // Delay for 5 seconds
             do {
                 Log.v("Localization mode", "triggered")
                 CoroutineScope(Dispatchers.Main).launch {
-                    isFetching = true
-                    currentCondition = "Determining Location"
                     try {
-                        val apList = getApAssignment(wifiList)
-//                        if (apList.apAmount!! <= 3) {
-//                            Toast.makeText(context, "Not enough APs, please move", Toast.LENGTH_SHORT).show()
-//                        } else {
+                        // Kalo initial scan, PDR gak aktif, atau step yang dilakuin banyak bakal scan
+                        if (!(stepCount < minimumSteps && isPdrActive && !isInitialScan)) {
+                            isFetching = true
+                            currentCondition = "Determining Location"
+
+                            val apList = getApAssignment(wifiList)
                             val predictions = getPrediction(apList)
-                            val coordinates = processPrediction(predictions)
-                            isUserIconShown = true
-                            isFetching = false
+                            val coordinates = processPrediction(predictions, userX, userY, userLantai, isPdrActive, isUncertain, isInitialScan)
+                            Log.v("coordinates", coordinates.toString())
+                            stepCount = 0
 
-                        if (isFirstPrediction) {
-                            userX = coordinates.x.toFloat()
-                            userY = coordinates.y.toFloat()
-                            userLantai = coordinates.z.toInt()
-                            isFirstPrediction = false
-                        } else {
-                            val belakang = getBelakang(userX, userY, coordinates.x.toFloat(), coordinates.y.toFloat(), orientation)
-
-                            if (!belakang) {
+                            if (coordinates != null) {
+                                isUserIconShown = true
                                 userX = coordinates.x.toFloat()
                                 userY = coordinates.y.toFloat()
                                 userLantai = coordinates.z.toInt()
+
+                                if (isPdrActive) {
+                                    isPdrResultTaken = true
+                                }
+
+                                isInitialScan = false
+
+                                if (isUncertain) {
+                                    Toast.makeText(context, "Due to previous uncertainty, new location is updated", Toast.LENGTH_SHORT).show()
+                                }
+
+                                isUncertain = false
+                            } else {
+                                if (!isInitialScan) {
+                                    Toast.makeText(context, "New location is far, continuing in PDR", Toast.LENGTH_SHORT).show()
+                                    isUncertain = true
+
+                                    if (isPdrActive) {
+                                        isPdrResultTaken = true
+                                    }
+                                } else {
+                                    Toast.makeText(context, "Confidence too close, re-scanning", Toast.LENGTH_SHORT).show()
+                                }
                             }
-                        }
 
                             confidenceList = ""
                             for (prediction in predictions.data) {
                                 confidenceList += "${prediction.x}, ${prediction.y}, ${prediction.z}: ${prediction.confidence}\n"
                             }
                             currentCondition = "X: ${userX.toInt()} Y: ${userY.toInt()} Lt: $userLantai"
-//                        }
+                        // Kalo step countnya dikit, lanjut pdr
+                        } else {
+                            isPdrResultTaken = true
+                            Toast.makeText(context, "Few movement detected, continuing in PDR", Toast.LENGTH_SHORT).show()
+                        }
+                        isFetching = false
                     } catch (e: Exception) {
                         Log.e("MainActivity", "Error: ${e.message}")
                         Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
@@ -317,6 +349,11 @@ fun MapScreen() {
             style = MaterialTheme.typography.bodySmall,
             textAlign = TextAlign.Center
         )
+        Text(
+            text = "Step Count: $stepCount",
+            style = MaterialTheme.typography.bodySmall,
+            textAlign = TextAlign.Center
+        )
         if (showSettings) {
             SettingsDialog(
                 isLocalization = isLocalizationMode,
@@ -327,6 +364,9 @@ fun MapScreen() {
             ) {
                 pdrActive, scanningActive, localization, registration, mlTest ->
                 isPdrActive = pdrActive
+                if (!pdrActive) {
+                    isPdrResultTaken = false
+                }
                 isScanningActive = scanningActive
                 isLocalizationMode = localization
                 isRegistrationMode = registration
@@ -334,9 +374,9 @@ fun MapScreen() {
                 showSettings = false
 
                 if (isPdrActive) {
-                    if (stepListener == null) {
-                        stepListener = object : StepListener {
-                            override fun onStep(count: Int) {
+                    stepDetector?.registerListener(object : StepListener {
+                        override fun onStep(count: Int) {
+                            if (isPdrResultTaken) {
                                 Log.d("Tes", "userX: $userX userY: $userY")
                                 stepCount += count
                                 val orientationRadians = Math.toRadians(orientation.toDouble())
@@ -347,18 +387,20 @@ fun MapScreen() {
                                 userY += deltaY.toFloat()
                                 userDirection = orientation
 
-                                Log.d("Tes", "ORIENTATION: $orientation userX: $userX userY: $userY")
+                                Log.d(
+                                    "Tes",
+                                    "ORIENTATION: $orientation userX: $userX userY: $userY"
+                                )
 //                                trajectoryViewModel.addStep(orientation)
                             }
                         }
-                        stepDetector?.registerListener(stepListener!!)
-                    }
+                    })
                     orientationDetector.start()
 //                        trajectoryViewModel.addStep(orientation)
+                    Log.d("Debug", "isCounting toggled On: $stepDetector")
                 } else {
                     Log.d("Debug", "isCounting toggled Check: $stepDetector")
                     stepDetector?.unregisterListener()
-                    stepListener = null
                     Log.d("Debug", "isCounting toggled OFF JING: $stepDetector")
                 }
             }
@@ -2258,6 +2300,7 @@ fun getApAssignment(wifiList: List<ScanResult>): AccessPoint {
     )
 }
 
+
 fun getBelakang(currentX: Float, currentY: Float, x: Float, y: Float, orientation: Float): Boolean {
     // Convert the orientation angle to radians
     val orientationRadians = Math.toRadians(orientation.toDouble())
@@ -2289,14 +2332,58 @@ fun getBelakang(currentX: Float, currentY: Float, x: Float, y: Float, orientatio
     return isBehind
 }
 
+fun processPrediction(predictions: PredictionList, userX: Float, userY: Float, userLantai: Int, isPdrActive: Boolean, isUncertain: Boolean, isInitialScan: Boolean): PredictionNew? {
+    // Variabel buat atur ambang batas
+    val confidenceThreshold = 0.2
+    val distanceTreshold = 1500.0
 
+    // Kalo lagi mode wifi only return aja tertinggi
+    if (!isPdrActive) {
+        return predictions.data[0]
+    }
 
+    // Itung perbandingan confidence semua titik dengan titik confidence tertinggi
+    val predictionToConsider = mutableListOf(predictions.data[0])
+    for (i in 1..<predictions.data.size) {
+        if (predictions.data[0].confidence - predictions.data[i].confidence <= confidenceThreshold ) {
+            predictionToConsider.add(predictions.data[i])
+        } else {
+            break
+        }
+    }
 
+    // Case kalo initial scan banyak prediksi yang mirip
+    if (isInitialScan && predictionToConsider.size > 1) {
+        return null
+    }
 
+    // Cari prediksi terdekat dengan PDR pake euclidean distance
+    var predictionCandidate: PredictionNew = predictions.data[0] // By default kandidat utama si index 0
+    if (predictionToConsider.size > 1) {
+        var nearestDistance = Integer.MAX_VALUE
 
-fun processPrediction(predictions: PredictionList): PredictionNew {
-    Log.v("Prediction", predictions.data.toString())
-    return predictions.data[0]
+        for (prediction in predictions.data) {
+            val distance = sqrt((userX.minus(prediction.x.toFloat()).pow(2) + (userY.minus(prediction.y.toFloat()).pow(2))).toDouble()).toInt()
+            if (distance < nearestDistance) {
+                nearestDistance = distance
+                predictionCandidate = prediction
+            }
+        }
+    }
+
+    // Kalo tadinya ragu, return aja yang baru
+    if (isUncertain) {
+        return predictionCandidate
+    }
+
+    // Cek apakah jarak dengan kandidat terdekat lebih dari threshold
+    val distance = sqrt((userX.minus(predictionCandidate.x.toFloat()).pow(2) + (userY.minus(predictionCandidate.y.toFloat()).pow(2))).toDouble())
+    if (distance > distanceTreshold && !isInitialScan) {
+        return null
+    }
+
+    Log.v("prediction", predictionCandidate.toString())
+    return predictionCandidate
 }
 
 suspend fun getPrediction(apValues: AccessPoint): PredictionList {

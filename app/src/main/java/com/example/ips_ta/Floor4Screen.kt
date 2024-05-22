@@ -32,7 +32,7 @@ fun Floor4Screen(ratio: Float) {
 //            size = Size(6710f * ratio, 2970f * ratio),
 //            style = Stroke(width = 1.dp.toPx())
 //        )
-        val path = Path()
+            val path = Path()
 
 // Panel
             createSquare(path, 2210f, 1800f, 2510f, 2100f)
