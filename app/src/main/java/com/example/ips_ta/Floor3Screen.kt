@@ -34,14 +34,17 @@ fun Floor3Screen(ratio: Float) {
 //        )
         val path = Path()
 
-        // Lift 1
+// Lift 1
         createSquare(path, 2510f, 1800f, 2810f, 2100f)
+        drawLabel(line((2510f + 2810f)/2), line((1800f + 2100f)/2), "Lift 1")
 
-        // Lift 2
+// Lift 2
         createSquare(path, 2810f, 1800f, 3110f, 2100f)
+        drawLabel(line((2810f + 3110f)/2), line((1800f + 2100f)/2), "Lift 2")
 
-        // Tangga
+// Tangga
         createSquare(path, 3110f, 1800f, 3710f, 2100f)
+        drawLabel(line((3110f + 3710f)/2), line((1800f + 2100f)/2), "Tangga")
 
         // Tembok kiri
         path.moveTo(line(2510f), line(1800f))
@@ -56,23 +59,29 @@ fun Floor3Screen(ratio: Float) {
         path.lineTo(line(3410f), line(1200f))
         path.close()
 
-        // A301
+// A301
         createSquare(path, 3410f, -179f, 4010f, 1200f)
+        drawLabel(line((3410f + 4010f)/2), line((-179f + 1200f)/2), "A301")
 
-        // A302
+// A302
         createSquare(path, 4010f, -179f, 4910f, 1200f)
+        drawLabel(line((4010f + 4910f)/2), line((-179f + 1200f)/2), "A302")
 
-        // A303
+// A303
         createSquare(path, 4910f, -179f, 5810f, 1200f)
+        drawLabel(line((4910f + 5810f)/2), line((-179f + 1200f)/2), "A303")
 
-        // A304
+// A304
         createSquare(path, 5810f, -179f, 6710f, 1200f)
+        drawLabel(line((5810f + 6710f)/2), line((-179f + 1200f)/2), "A304")
 
-        // A306
+// A306
         createSquare(path, 3710f, 1500f, 4910f, 2557f)
+        drawLabel(line((3710f + 4910f)/2), line((1500f + 2557f)/2), "A306")
 
-        // A305
+// A305
         createSquare(path, 4910f, 1500f, 6110f, 2557f)
+        drawLabel(line((4910f + 6110f)/2), line((1500f + 2557f)/2), "A305")
 
         // Tembok kanan
         path.moveTo(line(6110f), line(1500f))

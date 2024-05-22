@@ -195,6 +195,7 @@ fun MapScreen() {
     var isPdrActive by remember { mutableStateOf(false) }
     val trajectoryViewModel: TrajectoryViewModel = viewModel()
     var stepDetector: AccelSensorDetector? = AccelSensorDetector(context)
+    var stepListener: StepListener? = null
     var orientation by remember { mutableFloatStateOf(0f) }
     var stepCount by remember { mutableIntStateOf(0) }
     var orientationDetector = OrientationDetector(LocalContext.current) { azimuth ->
@@ -208,7 +209,8 @@ fun MapScreen() {
         isPersonFocused = false
         Log.v("Transformable", "offset: ${offset.x}, ${offset.y}")
     }
-
+    var isFirstPrediction by remember { mutableStateOf(true) }
+    var belakang by remember { mutableStateOf(false) }
     var mlUserIcon by remember { mutableStateOf<List<Prediction>>(emptyList()) }
 
     LaunchedEffect(isLocalizationMode, isScanningActive, isPdrActive) {
@@ -223,6 +225,7 @@ fun MapScreen() {
 
             delay(5000) // Delay for 5 seconds
             do {
+                Log.v("Localization mode", "triggered")
                 CoroutineScope(Dispatchers.Main).launch {
                     try {
                         // Kalo initial scan, PDR gak aktif, atau step yang dilakuin banyak bakal scan
@@ -2295,6 +2298,38 @@ fun getApAssignment(wifiList: List<ScanResult>): AccessPoint {
         ap182 = apValues["ap182"],
         apAmount = apValues.size
     )
+}
+
+
+fun getBelakang(currentX: Float, currentY: Float, x: Float, y: Float, orientation: Float): Boolean {
+    // Convert the orientation angle to radians
+    val orientationRadians = Math.toRadians(orientation.toDouble())
+
+    // Calculate the angle to the new coordinates from the current coordinates
+    val angleToNewCoords = Math.atan2((y - currentY).toDouble(), (x - currentX).toDouble())
+
+    // Normalize the orientation and angle to new coordinates
+    val normalizedOrientation = (Math.toDegrees(orientationRadians) % 360 + 360) % 360
+    val normalizedAngleToNewCoords = (Math.toDegrees(angleToNewCoords) % 360 + 360) % 360
+
+    // Compute the angle difference
+    var angleDifference = normalizedAngleToNewCoords - normalizedOrientation
+    if (angleDifference > 180) angleDifference -= 360
+    if (angleDifference < -180) angleDifference += 360
+
+    // Determine if the new coordinates are behind
+    val isBehind = angleDifference > 90 || angleDifference < -90
+
+    // Log the current coordinates, new coordinates, orientation, and whether it's behind
+    println("Current Coordinates: ($currentX, $currentY)")
+    println("New Coordinates: ($x, $y)")
+    println("Orientation: $orientation degrees")
+    println("Normalized Orientation: $normalizedOrientation degrees")
+    println("Angle to new coordinates: $normalizedAngleToNewCoords degrees")
+    println("Normalized Angle Difference: $angleDifference degrees")
+    println("Is behind: $isBehind")
+
+    return isBehind
 }
 
 fun processPrediction(predictions: PredictionList, userX: Float, userY: Float, userLantai: Int, isPdrActive: Boolean, isUncertain: Boolean, isInitialScan: Boolean): PredictionNew? {
