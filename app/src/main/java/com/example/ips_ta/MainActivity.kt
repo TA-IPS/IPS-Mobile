@@ -23,11 +23,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.AddCircle
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Settings
@@ -194,6 +189,7 @@ fun MapScreen() {
     var isPdrActive by remember { mutableStateOf(false) }
     val trajectoryViewModel: TrajectoryViewModel = viewModel()
     var stepDetector: AccelSensorDetector? = AccelSensorDetector(context)
+    var stepListener: StepListener? = null
     var orientation by remember { mutableFloatStateOf(0f) }
     var stepCount by remember { mutableIntStateOf(0) }
     var orientationDetector: OrientationDetector = OrientationDetector(LocalContext.current) { azimuth ->
@@ -208,7 +204,8 @@ fun MapScreen() {
     }
 
     var mlUserIcon by remember { mutableStateOf<List<Prediction>>(emptyList()) }
-
+    var isFirstPrediction by remember { mutableStateOf(true) }
+    var belakang by remember { mutableStateOf(false) }
     LaunchedEffect(isLocalizationMode, isScanningActive) {
         if (isLocalizationMode) {
             currentCondition = "Determining Location"
@@ -229,9 +226,22 @@ fun MapScreen() {
                             val coordinates = processPrediction(predictions)
                             isUserIconShown = true
                             isFetching = false
+
+                        if (isFirstPrediction) {
                             userX = coordinates.x.toFloat()
                             userY = coordinates.y.toFloat()
                             userLantai = coordinates.z.toInt()
+                            isFirstPrediction = false
+                        } else {
+                            val belakang = getBelakang(userX, userY, coordinates.x.toFloat(), coordinates.y.toFloat(), orientation)
+
+                            if (!belakang) {
+                                userX = coordinates.x.toFloat()
+                                userY = coordinates.y.toFloat()
+                                userLantai = coordinates.z.toInt()
+                            }
+                        }
+
                             confidenceList = ""
                             for (prediction in predictions.data) {
                                 confidenceList += "${prediction.x}, ${prediction.y}, ${prediction.z}: ${prediction.confidence}\n"
@@ -324,28 +334,31 @@ fun MapScreen() {
                 showSettings = false
 
                 if (isPdrActive) {
-                    stepDetector?.registerListener(object : StepListener {
-                        override fun onStep(count: Int) {
-                            Log.d("Tes", "userX: $userX userY: $userY")
-                            stepCount += count
-                            val orientationRadians = Math.toRadians(orientation.toDouble())
-                            val deltaX = sin(orientationRadians) * 50f
-                            val deltaY = -cos(orientationRadians) * 50f
+                    if (stepListener == null) {
+                        stepListener = object : StepListener {
+                            override fun onStep(count: Int) {
+                                Log.d("Tes", "userX: $userX userY: $userY")
+                                stepCount += count
+                                val orientationRadians = Math.toRadians(orientation.toDouble())
+                                val deltaX = sin(orientationRadians) * 50f
+                                val deltaY = -cos(orientationRadians) * 50f
 
-                            userX += deltaX.toFloat()
-                            userY += deltaY.toFloat()
-                            userDirection = orientation
+                                userX += deltaX.toFloat()
+                                userY += deltaY.toFloat()
+                                userDirection = orientation
 
-                            Log.d("Tes", "ORIENTATION: $orientation userX: $userX userY: $userY")
+                                Log.d("Tes", "ORIENTATION: $orientation userX: $userX userY: $userY")
 //                                trajectoryViewModel.addStep(orientation)
+                            }
                         }
-                    })
+                        stepDetector?.registerListener(stepListener!!)
+                    }
                     orientationDetector.start()
 //                        trajectoryViewModel.addStep(orientation)
-                    Log.d("Debug", "isCounting toggled On: $stepDetector")
                 } else {
                     Log.d("Debug", "isCounting toggled Check: $stepDetector")
                     stepDetector?.unregisterListener()
+                    stepListener = null
                     Log.d("Debug", "isCounting toggled OFF JING: $stepDetector")
                 }
             }
@@ -2244,6 +2257,42 @@ fun getApAssignment(wifiList: List<ScanResult>): AccessPoint {
         apAmount = apValues.size
     )
 }
+
+fun getBelakang(currentX: Float, currentY: Float, x: Float, y: Float, orientation: Float): Boolean {
+    // Convert the orientation angle to radians
+    val orientationRadians = Math.toRadians(orientation.toDouble())
+
+    // Calculate the angle to the new coordinates from the current coordinates
+    val angleToNewCoords = Math.atan2((y - currentY).toDouble(), (x - currentX).toDouble())
+
+    // Normalize the orientation and angle to new coordinates
+    val normalizedOrientation = (Math.toDegrees(orientationRadians) % 360 + 360) % 360
+    val normalizedAngleToNewCoords = (Math.toDegrees(angleToNewCoords) % 360 + 360) % 360
+
+    // Compute the angle difference
+    var angleDifference = normalizedAngleToNewCoords - normalizedOrientation
+    if (angleDifference > 180) angleDifference -= 360
+    if (angleDifference < -180) angleDifference += 360
+
+    // Determine if the new coordinates are behind
+    val isBehind = angleDifference > 90 || angleDifference < -90
+
+    // Log the current coordinates, new coordinates, orientation, and whether it's behind
+    println("Current Coordinates: ($currentX, $currentY)")
+    println("New Coordinates: ($x, $y)")
+    println("Orientation: $orientation degrees")
+    println("Normalized Orientation: $normalizedOrientation degrees")
+    println("Angle to new coordinates: $normalizedAngleToNewCoords degrees")
+    println("Normalized Angle Difference: $angleDifference degrees")
+    println("Is behind: $isBehind")
+
+    return isBehind
+}
+
+
+
+
+
 
 fun processPrediction(predictions: PredictionList): PredictionNew {
     Log.v("Prediction", predictions.data.toString())

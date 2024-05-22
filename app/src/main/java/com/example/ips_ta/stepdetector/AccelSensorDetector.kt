@@ -68,7 +68,7 @@ class AccelSensorDetector constructor(
     }
 
     override fun unregisterListener() {
-        stepListener = null
+        this.stepListener = null
         sensorManager?.unregisterListener(this@AccelSensorDetector)
     }
 
