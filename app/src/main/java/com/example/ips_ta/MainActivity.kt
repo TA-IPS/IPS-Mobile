@@ -209,7 +209,9 @@ fun MapScreen() {
     var belakang by remember { mutableStateOf(false) }
     var mlUserIcon by remember { mutableStateOf<List<Prediction>>(emptyList()) }
 
-    var isInitialScan by remember { mutableStateOf(true) }
+    var isInitialScan by remember { mutableStateOf(false) }
+    var isPeriodicScanning by remember { mutableStateOf(false) }
+    var requireImmediateScan by remember { mutableStateOf(false) }
     var predictionLists by remember { mutableStateOf<List<PredictionList>>(emptyList())}
     val minimumPredictionCount = 3
 
@@ -218,13 +220,18 @@ fun MapScreen() {
             CoroutineScope(Dispatchers.Main).launch {
                 try {
                     if (isLocalizationMode && isScanningActive) {
-
+                        // Kasus fetch banyak & cepet buat initial location
                         if (isInitialScan && predictionLists.size < minimumPredictionCount) {
                             val apList = getApAssignment(wifiList)
                             val predictions = getPrediction(apList)
                             predictionLists += listOf(predictions)
 
                             Log.v("Prediksi", "Dapet prediksi ke-${predictionLists.size} dari ml service")
+                        } else if (!isInitialScan && !isPeriodicScanning) {
+                            Log.v("Scan", "pindah ke scanning cepet")
+                            val apList = getApAssignment(wifiList)
+                            val predictions = getPrediction(apList)
+                            // Panggil lagi algoritma lu disini. Kalo udah kelar, set lagi isPeriodicScanning jadi true
                         }
                     }
                 } catch (e: Exception) {
@@ -237,13 +244,19 @@ fun MapScreen() {
 
     LaunchedEffect(isLocalizationMode, isScanningActive, isPdrActive) {
         if (isLocalizationMode) {
+            predictionLists = emptyList()
+
             currentCondition = "Determining Location"
             isFetching = true
+
             isPdrResultTaken = false
+
+            isPeriodicScanning = false
             isInitialScan = true
         }
     }
 
+    // Buat handle initial scan di awal awal
     if (isInitialScan && predictionLists.size == minimumPredictionCount) {
         Log.v("Initial scan", "Masuk judging prediction yang ada")
 
@@ -263,6 +276,33 @@ fun MapScreen() {
         currentCondition = "X: ${userX.toInt()} Y: ${userY.toInt()} Lt: $userLantai"
 
         predictionLists = emptyList()
+        isPeriodicScanning = true
+    }
+
+    // Ketika mulai masuk ke scan tiap 10 detik
+    LaunchedEffect(isPeriodicScanning) {
+        if (isPeriodicScanning) {
+            while (isPeriodicScanning) {
+                Log.v("Scan", "ngelakuin periodic scanning")
+                delay(10000)
+
+                    try {
+                        val apList = getApAssignment(wifiList)
+                        val predictions = getPrediction(apList)
+
+                        /*
+                            Lakuin algoritmalu disini, kalo misalkan mau jadi scan tiap 1.5 detik
+                            set isPeriodicScanning nya jadi false.
+                        */
+
+                    } catch (e: Exception) {
+                        Log.e("MainActivity", "Error: ${e.message}")
+                        Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                    }
+
+            }
+        }
+
     }
 
 //    LaunchedEffect(isLocalizationMode, isScanningActive, isPdrActive) {
