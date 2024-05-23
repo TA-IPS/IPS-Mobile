@@ -1,6 +1,7 @@
 package com.example.ips_ta
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -23,11 +24,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.AddCircle
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Settings
@@ -73,8 +69,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.util.Timer
-import java.util.TimerTask
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
@@ -133,6 +127,7 @@ fun MapScreen() {
     // Register BroadcastReceiver to listen for scan results
     val wifiScanReceiver = remember {
         object : BroadcastReceiver() {
+            @SuppressLint("MissingPermission")
             override fun onReceive(context: Context, intent: Intent) {
                 val success = intent.getBooleanExtra(WifiManager.EXTRA_RESULTS_UPDATED, false)
                 if (success) {
@@ -145,26 +140,27 @@ fun MapScreen() {
             }
         }
     }
+
     val intentFilter = IntentFilter().apply {
         addAction(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION)
     }
+
     DisposableEffect(context) {
         context.registerReceiver(wifiScanReceiver, intentFilter)
         onDispose {
             context.unregisterReceiver(wifiScanReceiver)
         }
     }
-    // Launch coroutine to scan for Wi-Fi networks every 2 seconds
-//    LaunchedEffect(Unit) {
-//        while (true) {
-//            delay(2000) // Delay for 2 seconds
-//            val success = wifiManager.startScan()
-//            if (!success) {
-//                // Scan failure handling
-//                println("Wi-Fi scan failed")
-//            }
+
+//    Timer().schedule(object : TimerTask() {
+//        override fun run() {
+//            Log.v("Timer", "Scanning")
+//            wifiManager.startScan()
 //        }
-//    }
+//    }, 6000)
+
+    wifiManager.startScan()
+
 
     var top by remember { mutableFloatStateOf(0f) }
     var left by remember { mutableFloatStateOf(0f) }
@@ -213,82 +209,137 @@ fun MapScreen() {
     var belakang by remember { mutableStateOf(false) }
     var mlUserIcon by remember { mutableStateOf<List<Prediction>>(emptyList()) }
 
+    var isInitialScan by remember { mutableStateOf(true) }
+    var predictionLists by remember { mutableStateOf<List<PredictionList>>(emptyList())}
+    val minimumPredictionCount = 3
+
+    LaunchedEffect(wifiList) {
+        if (wifiList.isNotEmpty()) {
+            CoroutineScope(Dispatchers.Main).launch {
+                try {
+                    if (isLocalizationMode && isScanningActive) {
+
+                        if (isInitialScan && predictionLists.size < minimumPredictionCount) {
+                            val apList = getApAssignment(wifiList)
+                            val predictions = getPrediction(apList)
+                            predictionLists += listOf(predictions)
+
+                            Log.v("Prediksi", "Dapet prediksi ke-${predictionLists.size} dari ml service")
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e("MainActivity", "Error: ${e.message}")
+                    Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
     LaunchedEffect(isLocalizationMode, isScanningActive, isPdrActive) {
         if (isLocalizationMode) {
             currentCondition = "Determining Location"
             isFetching = true
             isPdrResultTaken = false
-
-            val minimumSteps = 4
-            var isUncertain = false
-            var isInitialScan = true
-
-            delay(5000) // Delay for 5 seconds
-            do {
-                Log.v("Localization mode", "triggered")
-                CoroutineScope(Dispatchers.Main).launch {
-                    try {
-                        // Kalo initial scan, PDR gak aktif, atau step yang dilakuin banyak bakal scan
-                        if (!(stepCount < minimumSteps && isPdrActive && !isInitialScan)) {
-                            isFetching = true
-                            currentCondition = "Determining Location"
-
-                            val apList = getApAssignment(wifiList)
-                            val predictions = getPrediction(apList)
-                            val coordinates = processPrediction(predictions, userX, userY, userLantai, isPdrActive, isUncertain, isInitialScan)
-                            Log.v("coordinates", coordinates.toString())
-                            stepCount = 0
-
-                            if (coordinates != null) {
-                                isUserIconShown = true
-                                userX = coordinates.x.toFloat()
-                                userY = coordinates.y.toFloat()
-                                userLantai = coordinates.z.toInt()
-
-                                if (isPdrActive) {
-                                    isPdrResultTaken = true
-                                }
-
-                                isInitialScan = false
-
-                                if (isUncertain) {
-                                    Toast.makeText(context, "Due to previous uncertainty, new location is updated", Toast.LENGTH_SHORT).show()
-                                }
-
-                                isUncertain = false
-                            } else {
-                                if (!isInitialScan) {
-                                    Toast.makeText(context, "New location is far, continuing in PDR", Toast.LENGTH_SHORT).show()
-                                    isUncertain = true
-
-                                    if (isPdrActive) {
-                                        isPdrResultTaken = true
-                                    }
-                                } else {
-                                    Toast.makeText(context, "Confidence too close, re-scanning", Toast.LENGTH_SHORT).show()
-                                }
-                            }
-
-                            confidenceList = ""
-                            for (prediction in predictions.data) {
-                                confidenceList += "${prediction.x}, ${prediction.y}, ${prediction.z}: ${prediction.confidence}\n"
-                            }
-                            currentCondition = "X: ${userX.toInt()} Y: ${userY.toInt()} Lt: $userLantai"
-                        // Kalo step countnya dikit, lanjut pdr
-                        } else {
-                            isPdrResultTaken = true
-                            Toast.makeText(context, "Few movement detected, continuing in PDR", Toast.LENGTH_SHORT).show()
-                        }
-                        isFetching = false
-                    } catch (e: Exception) {
-                        Log.e("MainActivity", "Error: ${e.message}")
-                        Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
-                    }
-                }
-                delay(5000) // Delay for 5 seconds
-            } while (isScanningActive)
+            isInitialScan = true
         }
     }
+
+    if (isInitialScan && predictionLists.size == minimumPredictionCount) {
+        Log.v("Initial scan", "Masuk judging prediction yang ada")
+
+        isInitialScan = false
+
+        val coordinates = determineBestPrediction(predictionLists)
+        isUserIconShown = true
+        userX = coordinates.first.toFloat()
+        userY = coordinates.second.toFloat()
+        userLantai = coordinates.third.toInt()
+
+        if (isPdrActive) {
+            isPdrResultTaken = true
+        }
+
+        isFetching = false
+        currentCondition = "X: ${userX.toInt()} Y: ${userY.toInt()} Lt: $userLantai"
+
+        predictionLists = emptyList()
+    }
+
+//    LaunchedEffect(isLocalizationMode, isScanningActive, isPdrActive) {
+//        if (isLocalizationMode) {
+//            currentCondition = "Determining Location"
+//            isFetching = true
+//            isPdrResultTaken = false
+//
+//            val minimumSteps = 4
+//            var isUncertain = false
+//            var isInitialScan = true
+//
+//            delay(5000) // Delay for 5 seconds
+//            do {
+//                CoroutineScope(Dispatchers.Main).launch {
+//                    try {
+//                        // Kalo initial scan, PDR gak aktif, atau step yang dilakuin banyak bakal scan
+//                        if (!(stepCount < minimumSteps && isPdrActive && !isInitialScan)) {
+//                            isFetching = true
+//                            currentCondition = "Determining Location"
+//
+//                            Log.v("WifiList", "ngambil wifi")
+//                            val apList = getApAssignment(wifiList)
+//                            val predictions = getPrediction(apList)
+//                            val coordinates = processPrediction(predictions, userX, userY, userLantai, isPdrActive, isUncertain, isInitialScan)
+//                            stepCount = 0
+//
+//                            if (coordinates != null) {
+//                                isUserIconShown = true
+//                                userX = coordinates.x.toFloat()
+//                                userY = coordinates.y.toFloat()
+//                                userLantai = coordinates.z.toInt()
+//
+//                                if (isPdrActive) {
+//                                    isPdrResultTaken = true
+//                                }
+//
+//                                isInitialScan = false
+//
+//                                if (isUncertain) {
+//                                    Toast.makeText(context, "Due to previous uncertainty, new location is updated", Toast.LENGTH_SHORT).show()
+//                                }
+//
+//                                isUncertain = false
+//                            } else {
+//                                if (!isInitialScan) {
+//                                    Toast.makeText(context, "New location is far, continuing in PDR", Toast.LENGTH_SHORT).show()
+//                                    isUncertain = true
+//
+//                                    if (isPdrActive) {
+//                                        isPdrResultTaken = true
+//                                    }
+//                                } else {
+//                                    Toast.makeText(context, "Confidence too close, re-scanning", Toast.LENGTH_SHORT).show()
+//                                }
+//                            }
+//
+//                            confidenceList = ""
+//                            for (prediction in predictions.data) {
+//                                confidenceList += "${prediction.x}, ${prediction.y}, ${prediction.z}: ${prediction.confidence}\n"
+//                            }
+//                            currentCondition = "X: ${userX.toInt()} Y: ${userY.toInt()} Lt: $userLantai"
+//                        // Kalo step countnya dikit, lanjut pdr
+//                        } else {
+//                            isPdrResultTaken = true
+//                            Toast.makeText(context, "Few movement detected, continuing in PDR", Toast.LENGTH_SHORT).show()
+//                        }
+//                        isFetching = false
+//                    } catch (e: Exception) {
+//                        Log.e("MainActivity", "Error: ${e.message}")
+//                        Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+//                    }
+//                }
+//                delay(5000) // Delay for 5 seconds
+//            } while (isScanningActive)
+//        }
+//    }
 
     LaunchedEffect(isMLMode, isScanningActive) {
         if (isMLMode) {
@@ -315,15 +366,11 @@ fun MapScreen() {
         }
     }
 
-    Timer().schedule(object : TimerTask() {
-        override fun run() {
-            wifiManager.startScan()
-        }
-    }, 2000)
-
     Column {
         Row (
-            modifier = Modifier.fillMaxWidth().padding(start = 16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -351,6 +398,11 @@ fun MapScreen() {
         )
         Text(
             text = "Step Count: $stepCount",
+            style = MaterialTheme.typography.bodySmall,
+            textAlign = TextAlign.Center
+        )
+        Text(
+            text = wifiList.fold("") { acc, scanResult -> "$acc${scanResult.BSSID} ${scanResult.level}\n" },
             style = MaterialTheme.typography.bodySmall,
             textAlign = TextAlign.Center
         )
@@ -2111,7 +2163,6 @@ fun getApAssignment(wifiList: List<ScanResult>): AccessPoint {
             }
         }
     }
-    Log.v("Jumlah ap values", apValues.size.toString())
 
     return AccessPoint(
         ap1 = apValues["ap1"],
@@ -2386,6 +2437,42 @@ fun processPrediction(predictions: PredictionList, userX: Float, userY: Float, u
     return predictionCandidate
 }
 
+fun determineBestPrediction(predictionLists: List<PredictionList>): Triple<String, String, String> {
+    val coordinateConfidenceSum = mutableMapOf<Triple<String, String, String>, Float>()
+    val coordinateFrequency = mutableMapOf<Triple<String, String, String>, Int>()
+
+    Log.v("Judging prediksi", predictionLists.toString())
+
+    for (predictionList in predictionLists) {
+        for (prediction in predictionList.data) {
+            val coordinates = Triple(prediction.x, prediction.y, prediction.z)
+            if (coordinateConfidenceSum.containsKey(coordinates)) {
+                coordinateConfidenceSum[coordinates] = coordinateConfidenceSum[coordinates]!! + prediction.confidence
+                coordinateFrequency[coordinates] = coordinateFrequency[coordinates]!! + 1
+            } else {
+                coordinateConfidenceSum[coordinates] = prediction.confidence
+                coordinateFrequency[coordinates] = 1
+            }
+        }
+    }
+
+    Log.v("Total confidence koordinat", coordinateConfidenceSum.toString())
+    Log.v("Frekuensi koordinat", coordinateFrequency.toString())
+
+    val combinedScores = coordinateConfidenceSum.mapValues { (prediction, confidenceSum) ->
+        confidenceSum * (coordinateFrequency[prediction] ?: 1)
+    }
+
+    val normalizedCombinedScores = combinedScores.mapValues { (_, score) ->
+        score / combinedScores.values.sum()
+    }
+
+    Log.v("Daftar hasil perhitungan", normalizedCombinedScores.toString())
+
+    val trueCoordinate = normalizedCombinedScores.maxByOrNull { it.value }?.key
+
+    return trueCoordinate!!
+}
 suspend fun getPrediction(apValues: AccessPoint): PredictionList {
     try {
         return withContext(Dispatchers.IO) {
