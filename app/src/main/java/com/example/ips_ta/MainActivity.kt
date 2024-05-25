@@ -214,24 +214,33 @@ fun MapScreen() {
     var requireImmediateScan by remember { mutableStateOf(false) }
     var predictionLists by remember { mutableStateOf<List<PredictionList>>(emptyList())}
     val minimumPredictionCount = 3
+    var closestPosition by remember { mutableStateOf("") }
 
     LaunchedEffect(wifiList) {
         if (wifiList.isNotEmpty()) {
             CoroutineScope(Dispatchers.Main).launch {
                 try {
-                    if (isLocalizationMode && isScanningActive) {
+                    if (isLocalizationMode) {
                         // Kasus fetch banyak & cepet buat initial location
                         if (isInitialScan && predictionLists.size < minimumPredictionCount) {
                             val apList = getApAssignment(wifiList)
                             val predictions = getPrediction(apList)
                             predictionLists += listOf(predictions)
-
                             Log.v("Prediksi", "Dapet prediksi ke-${predictionLists.size} dari ml service")
                         } else if (!isInitialScan && !isPeriodicScanning) {
                             Log.v("Scan", "pindah ke scanning cepet")
                             val apList = getApAssignment(wifiList)
                             val predictions = getPrediction(apList)
                             // Panggil lagi algoritma lu disini. Kalo udah kelar, set lagi isPeriodicScanning jadi true
+                            val predictionCandidate = comparePosition(predictions, userX, userY, userLantai){ message ->
+                                closestPosition = message
+                            }
+                            if(predictionCandidate != null){
+                                userX = predictionCandidate.x.toFloat()
+                                userY = predictionCandidate.y.toFloat()
+                                userLantai = predictionCandidate.z.toInt()
+                                isPeriodicScanning = true
+                            }
                         }
                     }
                 } catch (e: Exception) {
@@ -281,7 +290,7 @@ fun MapScreen() {
 
     // Ketika mulai masuk ke scan tiap 10 detik
     LaunchedEffect(isPeriodicScanning) {
-        if (isPeriodicScanning) {
+        if (isPeriodicScanning && isScanningActive) {
             while (isPeriodicScanning) {
                 Log.v("Scan", "ngelakuin periodic scanning")
                 delay(10000)
@@ -289,11 +298,21 @@ fun MapScreen() {
                     try {
                         val apList = getApAssignment(wifiList)
                         val predictions = getPrediction(apList)
-
                         /*
                             Lakuin algoritmalu disini, kalo misalkan mau jadi scan tiap 1.5 detik
                             set isPeriodicScanning nya jadi false.
                         */
+                        val predictionCandidate = comparePosition(predictions, userX, userY, userLantai){ message ->
+                            closestPosition = message
+                        }
+                        if(predictionCandidate != null){
+                            userX = predictionCandidate.x.toFloat()
+                            userY = predictionCandidate.y.toFloat()
+                            userLantai = predictionCandidate.z.toInt()
+                        } else {
+                            Log.v("PREDIKSI", "TIDAK DEKAT")
+                            isPeriodicScanning = false
+                        }
 
                     } catch (e: Exception) {
                         Log.e("MainActivity", "Error: ${e.message}")
@@ -431,8 +450,10 @@ fun MapScreen() {
             )
         }
 
+
+
         Text(
-            text = confidenceList,
+            text = "Posisi: $userX,$userY,$userLantai",
             style = MaterialTheme.typography.bodySmall,
             textAlign = TextAlign.Center
         )
@@ -442,10 +463,25 @@ fun MapScreen() {
             textAlign = TextAlign.Center
         )
         Text(
-            text = wifiList.fold("") { acc, scanResult -> "$acc${scanResult.BSSID} ${scanResult.level}\n" },
+            text = closestPosition,
             style = MaterialTheme.typography.bodySmall,
             textAlign = TextAlign.Center
         )
+//        Text(
+//            text = confidenceList,
+//            style = MaterialTheme.typography.bodySmall,
+//            textAlign = TextAlign.Center
+//        )
+//        Text(
+//            text = "Step Count: $stepCount",
+//            style = MaterialTheme.typography.bodySmall,
+//            textAlign = TextAlign.Center
+//        )
+//        Text(
+//            text = wifiList.fold("") { acc, scanResult -> "$acc${scanResult.BSSID} ${scanResult.level}\n" },
+//            style = MaterialTheme.typography.bodySmall,
+//            textAlign = TextAlign.Center
+//        )
         if (showSettings) {
             SettingsDialog(
                 isLocalization = isLocalizationMode,
@@ -2423,6 +2459,40 @@ fun getBelakang(currentX: Float, currentY: Float, x: Float, y: Float, orientatio
     return isBehind
 }
 
+fun comparePosition(predictions: PredictionList,userX: Float, userY: Float, userLantai: Int, onChanged: (String) -> Unit ): PredictionNew? {
+    // Variabel buat atur ambang batas
+//    val confidenceThreshold = 0.2
+    val distanceTreshold = 300.0
+
+
+//    // Itung perbandingan confidence semua titik dengan titik confidence tertinggi
+//    val predictionToConsider = mutableListOf(predictions.data[0])
+//    for (i in 1..<predictions.data.size) {
+//        if (predictions.data[0].confidence - predictions.data[i].confidence <= confidenceThreshold ) {
+//            predictionToConsider.add(predictions.data[i])
+//        } else {
+//            break
+//        }
+//    }
+
+    var predictionCandidate: PredictionNew? = null
+
+    var nearestDistance = 10000.0
+
+    for (prediction in predictions.data) {
+        val distance = sqrt((userX.minus(prediction.x.toFloat()).pow(2) + (userY.minus(prediction.y.toFloat()).pow(2))).toDouble())
+        if (distance < nearestDistance) {
+            nearestDistance = distance
+            predictionCandidate = prediction
+        }
+    }
+    onChanged("Prediksi: $predictionCandidate\nDistance: $nearestDistance")
+    if(predictionCandidate != null && nearestDistance < distanceTreshold){
+        return predictionCandidate
+    }
+    return null;
+}
+
 fun processPrediction(predictions: PredictionList, userX: Float, userY: Float, userLantai: Int, isPdrActive: Boolean, isUncertain: Boolean, isInitialScan: Boolean): PredictionNew? {
     // Variabel buat atur ambang batas
     val confidenceThreshold = 0.2
@@ -2462,6 +2532,7 @@ fun processPrediction(predictions: PredictionList, userX: Float, userY: Float, u
         }
     }
 
+
     // Kalo tadinya ragu, return aja yang baru
     if (isUncertain) {
         return predictionCandidate
@@ -2472,6 +2543,8 @@ fun processPrediction(predictions: PredictionList, userX: Float, userY: Float, u
     if (distance > distanceTreshold && !isInitialScan) {
         return null
     }
+
+
 
     Log.v("prediction", predictionCandidate.toString())
     return predictionCandidate
