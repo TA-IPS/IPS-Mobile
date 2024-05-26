@@ -15,15 +15,15 @@ object RetrofitInstance {
             .build()
     }
 
+    val BEApiService: BEService by lazy {
+        retrofit.create(BEService::class.java)
+    }
+
     private val retrofit2: Retrofit by lazy {
         Retrofit.Builder()
             .baseUrl(ML_BASE_URL)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
-    }
-
-    val BEService: BEService by lazy {
-        retrofit.create(BEService::class.java)
     }
 
     val mlApiService: MLService by lazy {

@@ -203,7 +203,6 @@ fun MapScreen() {
         ratio *= zoomChange
         offset += offsetChange
         isPersonFocused = false
-        Log.v("Transformable", "offset: ${offset.x}, ${offset.y}")
     }
     var isFirstPrediction by remember { mutableStateOf(true) }
     var belakang by remember { mutableStateOf(false) }
@@ -215,11 +214,28 @@ fun MapScreen() {
     var predictionLists by remember { mutableStateOf<List<PredictionList>>(emptyList())}
     val minimumPredictionCount = 3
 
+    var grids by remember { mutableStateOf<Grids?>(null) }
+    var isGridsLoaded by remember { mutableStateOf(false) }
+
+    LaunchedEffect(isGridsLoaded) {
+        if (grids == null) {
+            try {
+                Log.v("Grids", "mencoba ngambil grid")
+                grids = getRecordedGrids()
+                Log.v("Grids", grids.toString())
+            } catch (e: Exception) {
+                Log.e("Fetching Grid", "Error: ${e.message}")
+                Toast.makeText(context, "Error Fetching Grid: ${e.message}", Toast.LENGTH_SHORT).show()
+                isGridsLoaded = !isGridsLoaded
+            }
+        }
+    }
+
     LaunchedEffect(wifiList) {
         if (wifiList.isNotEmpty()) {
             CoroutineScope(Dispatchers.Main).launch {
                 try {
-                    if (isLocalizationMode && isScanningActive) {
+                    if (isLocalizationMode) {
                         // Kasus fetch banyak & cepet buat initial location
                         if (isInitialScan && predictionLists.size < minimumPredictionCount) {
                             val apList = getApAssignment(wifiList)
@@ -227,10 +243,12 @@ fun MapScreen() {
                             predictionLists += listOf(predictions)
 
                             Log.v("Prediksi", "Dapet prediksi ke-${predictionLists.size} dari ml service")
-                        } else if (!isInitialScan && !isPeriodicScanning) {
+                        } else if (!isInitialScan && !isPeriodicScanning && predictionLists.size < minimumPredictionCount) {
                             Log.v("Scan", "pindah ke scanning cepet")
                             val apList = getApAssignment(wifiList)
                             val predictions = getPrediction(apList)
+                            predictionLists += listOf(predictions)
+
                             // Panggil lagi algoritma lu disini. Kalo udah kelar, set lagi isPeriodicScanning jadi true
                         }
                     }
@@ -279,9 +297,32 @@ fun MapScreen() {
         isPeriodicScanning = true
     }
 
+    if (!isInitialScan && predictionLists.size == minimumPredictionCount) {
+
+        val candidateCoordinate = determineBestPrediction(predictionLists)
+        val result = compareToPrediction(candidateCoordinate, grids!!, userX, userY, userLantai)
+
+        if (result != null) {
+            isUserIconShown = true
+            userX = result.first
+            userY = result.second
+            userLantai = result.third
+        }
+
+        if (isPdrActive) {
+            isPdrResultTaken = true
+        }
+
+        isFetching = false
+        currentCondition = "X: ${userX.toInt()} Y: ${userY.toInt()} Lt: $userLantai"
+
+        predictionLists = emptyList()
+        isPeriodicScanning = true
+    }
+
     // Ketika mulai masuk ke scan tiap 10 detik
     LaunchedEffect(isPeriodicScanning) {
-        if (isPeriodicScanning) {
+        if (isPeriodicScanning && isScanningActive) {
             while (isPeriodicScanning) {
                 Log.v("Scan", "ngelakuin periodic scanning")
                 delay(10000)
@@ -289,7 +330,8 @@ fun MapScreen() {
                     try {
                         val apList = getApAssignment(wifiList)
                         val predictions = getPrediction(apList)
-
+                        predictionLists += listOf(predictions)
+                        isPeriodicScanning = false
                         /*
                             Lakuin algoritmalu disini, kalo misalkan mau jadi scan tiap 1.5 detik
                             set isPeriodicScanning nya jadi false.
@@ -436,16 +478,16 @@ fun MapScreen() {
             style = MaterialTheme.typography.bodySmall,
             textAlign = TextAlign.Center
         )
-        Text(
-            text = "Step Count: $stepCount",
-            style = MaterialTheme.typography.bodySmall,
-            textAlign = TextAlign.Center
-        )
-        Text(
-            text = wifiList.fold("") { acc, scanResult -> "$acc${scanResult.BSSID} ${scanResult.level}\n" },
-            style = MaterialTheme.typography.bodySmall,
-            textAlign = TextAlign.Center
-        )
+//        Text(
+//            text = "Step Count: $stepCount",
+//            style = MaterialTheme.typography.bodySmall,
+//            textAlign = TextAlign.Center
+//        )
+//        Text(
+//            text = wifiList.fold("") { acc, scanResult -> "$acc${scanResult.BSSID} ${scanResult.level}\n" },
+//            style = MaterialTheme.typography.bodySmall,
+//            textAlign = TextAlign.Center
+//        )
         if (showSettings) {
             SettingsDialog(
                 isLocalization = isLocalizationMode,
@@ -1464,7 +1506,7 @@ fun postFingerprint(apValues: Map<String, Float?>, floor: Int, x: Int, y: Int, u
         wifi = unregisteredBssid
     )
     CoroutineScope(Dispatchers.IO).launch {
-        RetrofitInstance.BEService.postFingerprint(fingerprint)
+        RetrofitInstance.BEApiService.postFingerprint(fingerprint)
 //        RetrofitInstance.mlApiService.predict(fingerprint)
     }
 }
@@ -2513,6 +2555,41 @@ fun determineBestPrediction(predictionLists: List<PredictionList>): Triple<Strin
 
     return trueCoordinate!!
 }
+
+fun compareToPrediction(prediction: Triple<String, String, String>, grids: Grids, userX: Float, userY: Float, lantai: Int): Triple<Float, Float, Int>? {
+    val x = prediction.first.toFloat()
+    val y = prediction.second.toFloat()
+    val z = prediction.third.toInt()
+
+    if (lantai != z) {
+        Log.v("Algoritma", "Prediksi lantai baru, pindah langsung")
+        return Triple(x, y, z)
+    }
+
+    val distanceToPrediction = sqrt((userX.minus(x).pow(2) + (userY.minus(y).pow(2))))
+
+    val gridFloor: List<Coordinate> = when (lantai) {
+        0 -> grids.zero
+        1 -> grids.one
+        2 -> grids.two
+        3 -> grids.three
+        else -> grids.zero
+    }
+
+    for (grid in gridFloor) {
+        val gridX = grid.x.toFloat()
+        val gridY = grid.y.toFloat()
+        val gridDistance = sqrt((userX.minus(gridX).pow(2) + (userY.minus(gridY).pow(2))))
+        if (gridDistance < distanceToPrediction) {
+            Log.v("Algoritma", "Ada grid yang lebih deket, pindah ke prediksi")
+            return Triple(gridX, gridY, z)
+        }
+    }
+
+    Log.v("algoritma", "Gak ada yang deket, lanjut pdr")
+
+    return null
+}
 suspend fun getPrediction(apValues: AccessPoint): PredictionList {
     try {
         return withContext(Dispatchers.IO) {
@@ -2540,6 +2617,17 @@ suspend fun getMultiPrediction(apValues: AccessPoint): List<Prediction> {
                 predictionGnbDeferred.await(),
                 predictionCnnDeferred.await()
             )
+        }
+    } catch (e: Exception) {
+        Log.e("MainActivity", "Error: ${e.message}")
+        throw e
+    }
+}
+
+suspend fun getRecordedGrids(): Grids {
+    try {
+        return withContext(Dispatchers.IO) {
+            RetrofitInstance.BEApiService.getGrid()
         }
     } catch (e: Exception) {
         Log.e("MainActivity", "Error: ${e.message}")

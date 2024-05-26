@@ -8,6 +8,6 @@ interface BEService {
     @POST("fingerprint")
     suspend fun postFingerprint(@Body fingerprint: Fingerprint)
 
-    @GET("fingerprint")
-    suspend fun getFingerprint(): String
+    @GET("fingerprint/grid")
+    suspend fun getGrid(): Grids
 }
