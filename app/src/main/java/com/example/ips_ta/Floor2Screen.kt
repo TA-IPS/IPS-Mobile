@@ -56,7 +56,6 @@ fun Floor2Screen(ratio: Float) {
 
 // Pengisi toilet
         createSquare(path, 3510f, 2100f, 3710f, 2250f)
-        drawLabel(line((3510f + 3710f)/2), line((2100f + 2250f)/2), "Pengisi Toilet")
 
 // Auditorium A201
         path.moveTo(line(1610f), line(-295.5f))
@@ -90,7 +89,7 @@ fun Floor2Screen(ratio: Float) {
         path.moveTo(line(1010f), line(2400f))
         path.lineTo(line(2460f), line(2400f))
         path.close()
-        drawLabel(line((706f + 2460f)/2), line((-295.5f + 2400f)/2), "Plaza")
+        drawLabel(line(1250f), line(550f), "Plaza")
 
 // A205
         createSquare(path, 3410f, -179f, 4010f, 1500f)
@@ -107,7 +106,6 @@ fun Floor2Screen(ratio: Float) {
         path.moveTo(line(5510f), line(1500f))
         path.lineTo(line(5510f), line(630f))
         path.close()
-        drawLabel(line((4910f + 5510f)/2), line((630f + 1500f)/2), "Void Area")
 
 // A207
         createSquare(path, 5210f, -179f, 6710f, 630f)
