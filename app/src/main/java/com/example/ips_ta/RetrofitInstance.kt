@@ -22,7 +22,7 @@ object RetrofitInstance {
             .build()
     }
 
-    val BEService: BEService by lazy {
+    val BEApiService: BEService by lazy {
         retrofit.create(BEService::class.java)
     }
 

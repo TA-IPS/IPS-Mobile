@@ -60,7 +60,6 @@ fun Floor1Screen(ratio: Float) {
 
 // Pengisi toilet
         createSquare(path, 3510f, 2100f, 3710f, 2250f)
-        drawLabel(line((3510f + 3710f)/2), line((2100f + 2250f)/2), "Pengisi Toilet")
 
 
         // A101
@@ -116,6 +115,10 @@ fun Floor1Screen(ratio: Float) {
         createSquare(path, 5990f, -179f, 6710f, 630f)
         drawLabel(line((5990f + 6710f)/2), line((-179f + 630f)/2), "A108")
 
+        path.moveTo(line(6710f), line(630f))
+        path.lineTo(line(6710f), line(900f))
+        path.close()
+
 // A109
         createSquare(path, 5810f, 900f, 6710f, 1800f)
         drawLabel(line((5810f + 6710f)/2), line((900f + 1800f)/2), "A109")
@@ -164,6 +167,7 @@ fun Floor1Screen(ratio: Float) {
 
         path.moveTo(line(1010f), line(1800f))
         path.lineTo(line(2210f), line(1800f))
+        path.close()
 
         drawPath(
             path = path,

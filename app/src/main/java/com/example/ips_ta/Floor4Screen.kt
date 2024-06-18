@@ -56,7 +56,6 @@ fun Floor4Screen(ratio: Float) {
 
 // Pengisi toilet
             createSquare(path, 3510f, 2100f, 3710f, 2250f)
-            drawLabel(line((3510f + 3710f)/2), line((2100f + 2250f)/2), "Pengisi Toilet")
 
 // A405
             path.moveTo(line(834f), line(-177.5f))
@@ -102,7 +101,7 @@ fun Floor4Screen(ratio: Float) {
 
 // A409 lain
             createSquare(path, 3410f, -177.5f, 4010f, 1500f)
-            drawLabel(line((3410f + 4010f)/2), line((-177.5f + 1500f)/2), "A409 lain")
+            drawLabel(line((3410f + 4010f)/2), line((-177.5f + 1500f)/2), "A409")
 
 // A412
             createSquare(path, 4010f, -177.5f, 4360f, 590f)
