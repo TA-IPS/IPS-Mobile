@@ -175,7 +175,7 @@ fun MapScreen() {
     var showDialog by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
     var showInfo by remember { mutableStateOf(false) }
-    val floorLabels = listOf("D", "1", "2", "3", "4", "5", "6")
+    val floorLabels = listOf("D", "1", "2", "3", "4", "5", "6", "7")
 
     var isLocalizationMode by remember { mutableStateOf(true) }
     var isRegistrationMode by remember { mutableStateOf(false) }
@@ -548,6 +548,7 @@ fun MapScreen() {
                     4 -> Floor4Screen(ratio = ratio)
                     5 -> Floor5Screen(ratio = ratio)
                     6 -> Floor6Screen(ratio = ratio)
+                    7 -> Floor7Screen(ratio = ratio)
                 }
             }
 
