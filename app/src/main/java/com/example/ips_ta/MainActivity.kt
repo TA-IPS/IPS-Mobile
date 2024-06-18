@@ -309,6 +309,7 @@ fun MapScreen() {
         userY = coordinates.second.toFloat()
         userLantai = coordinates.third.toInt()
         isUserIconShown = true
+        isPersonFocused = true
 
         if (isPdrActive) {
             isPdrResultTaken = true
@@ -327,7 +328,7 @@ fun MapScreen() {
 
     // Kalo pdr gak aktif, nge prediksi biasa aja, scan periodic setelah initial scan
     LaunchedEffect(isInitialScan) {
-        if (!isInitialScan && isScanningActive && !isPdrActive) {
+        if (!isInitialScan && isScanningActive && !isPdrActive && !isRegistrationMode) {
             while (true) {
                 delay(5000)
                 Log.v("Scan", "ngelakuin periodic scanning")
@@ -554,7 +555,7 @@ fun MapScreen() {
 
             if (isPersonFocused) {
                 ratio = 0.6f
-                offset = Offset(-userX * ratio + 1000, -userY * ratio + 800)
+                offset = Offset((-userX + 1700) * ratio, (-userY + 1200) * ratio)
                 lantai = userLantai
             }
 
